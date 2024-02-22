@@ -98,7 +98,7 @@ void ImportPopup::importJSON(CCObject* sender) {
     utils::file::pickFile(file::PickMode::OpenFile, {}, [this](ghc::filesystem::path const& path) {
         this->m_jsonSets.clear();
         std::ifstream jsonFile(path, std::ifstream::binary);
-        try{
+        // try{
             jsonFile >> this->m_jsonSets;   
             this->m_buttonMenu->getChildByID("import-btn")->setVisible(false);
             this->m_buttonMenu->getChildByID("change-btn")->setVisible(true);
@@ -108,16 +108,17 @@ void ImportPopup::importJSON(CCObject* sender) {
             std::stringstream ss;
             ss << "Objects amount: " << this->m_jsonSets.size();
             static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(ss.str().c_str());
-        } catch(...) {
-            this->m_jsonSets.clear();
-            FLAlertLayer::create("Error", "<cr>Wrong file!</c> File must be a <cy>JSON</c> output from <cg>Geometrize Demo Website!</c>", "OK")->show();
-        }
+            FLAlertLayer::create("Info", "Succesfully imported file", "OK")->show();
+        // } catch(...) {
+        //     this->m_jsonSets.clear();
+        //     FLAlertLayer::create("Error", "<cr>Wrong file!</c> File must be a <cy>JSON</c> output from <cg>Geometrize Demo Website!</c>", "OK")->show();
+        // }
     });
 }
 
 void ImportPopup::convert(CCObject* sender) {
     if(!this->m_jsonSets.empty()) {
-        try{
+        // try{
             this->m_draw_scale = std::stof(static_cast<InputNode*>(this->m_buttonMenu->getChildByID("draw-input"))->getString());
             int z_order = 0;
             for (Json::Value::ArrayIndex x = 0; x != this->m_jsonSets.size(); x++) {
@@ -147,10 +148,10 @@ void ImportPopup::convert(CCObject* sender) {
             this->m_jsonSets.clear();
             this->keyBackClicked();
             FLAlertLayer::create("Info", "Successfully converted to gd objects!", "OK")->show();
-        } catch(...) {
-            this->m_jsonSets.clear();
-            FLAlertLayer::create("Error", "<cr>Wrong file!</c> File must be a <cy>JSON</c> output from <cg>Geometrize Demo Website!</c>", "OK")->show();
-        }
+        // } catch(...) {
+        //     this->m_jsonSets.clear();
+        //     FLAlertLayer::create("Error", "<cr>Wrong file format!</c> File must be a <cy>JSON</c> output from <cg>Geometrize Demo Website!</c>", "OK")->show();
+        // }
     } else {
         FLAlertLayer::create("Info", "Nothing to convert!", "OK")->show();
     }

@@ -12,8 +12,8 @@
 	"repository": "https://github.com/ShineUA/geometrize2gd-mod-geode",
 	"resources": {
 		"spritesheets": {
-			"ImgToGDButton": [
-				"resources/spritesheets/img2gd.png"
+			"GeometrizeToGDButton": [
+				"resources/spritesheets/geometrize2gd.png"
 			]
 		}
 	}

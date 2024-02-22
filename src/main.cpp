@@ -10,14 +10,14 @@ class $modify(MyEditorUI, EditorUI) {
 			auto importPopup = ImportPopup::create(this->getSelectedObjects());
 			CCScene::get()->addChild(importPopup);
 		} else {
-			FLAlertLayer::create("Info", "You have to choose exactly one object to be the down-left corner of the image!", "OK")->show();
+			FLAlertLayer::create("Info", "You have to choose <cg>exactly one</c> object to be the down-left corner of the image!", "OK")->show();
 		}
 		
 	}
 
 	void createMoveMenu() {
 		EditorUI::createMoveMenu();
-		auto* btn = this->getSpriteButton("img2gd.png"_spr, menu_selector(MyEditorUI::onImgToGD), nullptr, 0.9f);
+		auto* btn = this->getSpriteButton("geometrize2gd.png"_spr, menu_selector(MyEditorUI::onImgToGD), nullptr, 0.9f);
 		m_editButtonBar->m_buttonArray->addObject(btn);
 		auto rows = GameManager::sharedState()->getIntGameVariable("0049");
 		auto cols = GameManager::sharedState()->getIntGameVariable("0050");
