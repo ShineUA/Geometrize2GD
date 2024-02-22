@@ -38,6 +38,6 @@
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/10.png)
 
 11. Now it's done. Enjoy your result!
-P.S: Yeah, you will need to mirror it by vertical.
+P.S: Yeah, you will need to flip it upside-down.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/9.png)
