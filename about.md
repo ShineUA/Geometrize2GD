@@ -4,4 +4,4 @@ This a mod that imports objects from [Geometrize Web Demo](https://www.samcodes.
 
 ### [Tutorial to use this mod](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/README.md)
 
-## TODO: Fix android bugs. Also add triangles support.
+## TODO: Add triangles support.
