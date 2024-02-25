@@ -66,7 +66,7 @@
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/7.png)
 
-4. Change scale if you want and click "Create" button.
+4. Change Scale or Z-Layer Offset if you want and click "Create" button.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/8.png)
 
