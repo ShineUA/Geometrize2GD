@@ -5,7 +5,7 @@
 ### Using [Geometrize Web Demo](https://www.samcodes.co.uk/project/geometrize-haxe-web/)
 
 1. First go to [Geometrize Demo Website](https://www.samcodes.co.uk/project/geometrize-haxe-web/)
-2. Set those settings.
+2. Set those settings. Don't forget to select **only** circles!
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/1.png)
 
