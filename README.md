@@ -1,6 +1,10 @@
 # Tutorial to use this mod
-1. First go to [Geometrize Demo Website](https://www.samcodes.co.uk/project/geometrize-haxe-web/)
 
+## Converting our image to **.json** file.
+
+### Using [Geometrize Web Demo](https://www.samcodes.co.uk/project/geometrize-haxe-web/)
+
+1. First go to [Geometrize Demo Website](https://www.samcodes.co.uk/project/geometrize-haxe-web/)
 2. Set those settings.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/1.png)
@@ -13,31 +17,64 @@
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/3.png)
 
-5. Then click "Save JSON" button. This will download the .json file that you'll need.
+5. Then click "Save JSON" button. This will download the **.json** file that you'll need.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/4.png)
 
-6. Then go in GD Editor and place any object it will be a left-down corner of image.
+### Using [Geometrize Desktop App](https://www.geometrize.co.uk/)
+
+1. First you need to download [Geometrize Desktop App](https://www.geometrize.co.uk/)
+
+![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/11.png)
+
+2. Install it
+3. After opening it up click "Open Image" button and select your image.
+
+![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/12.png)
+
+4. **IMPORTANT!!!** Select **ONLY** circles.
+
+![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/13.png)
+
+5. Also set shape opacity to 255.
+
+![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/14.png)
+
+6. Click "Start" button.
+
+![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/17.png)
+
+7. Now if the result presented on screen are good for you click "Stop" button if not, just wait until it'll be good.
+
+![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/15.png)
+
+8. Go to "Exporters" tab and click "Save Geometry Data" button. This will save the **.json** file that you'll need
+
+![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/16.png)
+
+## Importing our **.json** file to Geometry Dash
+
+1. Go in GD Editor and place any object it will be a left-down corner of image.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/5.png)
 
-7. Now go to edit section of editor and click on button that displayed on the image bottom.
+2. Now go to edit section of editor and click on button that displayed on the image bottom.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/6.png)
 
-8. Click "Load JSON" button and select .json file you downloaded.
+3. Click "Select File" button and select .json file you downloaded.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/7.png)
 
-9. Change scale if you want and click "Convert!" button.
+4. Change scale if you want and click "Create" button.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/8.png)
 
-10. The last one: Set color of imported art/image to black.
+5. The last one: Set color of imported art/image to black.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/10.png)
 
-11. Now it's done. Enjoy your result!
-P.S: Yeah, you will need to flip it vertical.
+6. Now it's done. Enjoy your result!
+   P.S: Yeah, you will need to flip it vertical.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/9.png)
