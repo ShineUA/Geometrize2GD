@@ -1,0 +1,15 @@
+name: You have a suggestion? You should go here.
+description: Form to submit a suggestion.
+title: "[Suggestion] "
+labels: ["suggestion"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe your suggestion
+      placeholder: I wanna to you to add that
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: Thanks for your suggestion. I'll try to add it as soon as possible.

@@ -138,13 +138,26 @@ void ImportPopup::importJSON(CCObject* sender) {
                 this->m_mainLayer->getChildByID("count-label")->setVisible(true);
                 this->m_mainLayer->getChildByID("file-label")->setVisible(true);
                 this->m_buttonMenu->getChildByID("convert-btn")->setVisible(true);
-                std::string text;
                 try {
                     if(this->m_jsonSets.isMember("shapes")) {
-                        static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", this->m_jsonSets["shapes"].size()).c_str());
+                        int count = 0;
+                        for(Json::Value::ArrayIndex x = 0; x != this->m_jsonSets["shapes"].size(); x++) {
+                            if(this->m_jsonSets["shapes"][x]["type"].asInt() == this->m_circle_type[0] && this->m_jsonSets["shapes"][x]["score"].asFloat() > 0 || this->m_jsonSets["shapes"][x]["type"].asInt() == this->m_circle_type[1] && this->m_jsonSets["shapes"][x]["score"].asFloat() > 0) {
+                                count++;
+                            }
+                        }
+                        std::stringstream ss;
+                        ss << count;
+                        static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", count).c_str());
                     }
                 } catch(Json::LogicError) {
-                    static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", this->m_jsonSets.size()).c_str());
+                    int count = 0;
+                    for(Json::Value::ArrayIndex x = 0; x != this->m_jsonSets.size(); x++) {
+                        if(this->m_jsonSets[x]["type"].asInt() == this->m_circle_type[0] && this->m_jsonSets[x]["score"].asFloat() > 0 || this->m_jsonSets[x]["type"].asInt() == this->m_circle_type[1] && this->m_jsonSets[x]["score"].asFloat() > 0) {
+                            count++;
+                        }
+                    }
+                    static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", count).c_str());
                 }
                 static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("file-label"))->setString(fmt::format("File: {}", path.filename()).c_str());
                 FLAlertLayer::create("Info", "Succesfully imported file", "OK")->show();

@@ -23,8 +23,6 @@ class ImportPopup : public FLAlertLayer, TextInputDelegate, FLAlertLayerProtocol
         };
         GameObject* m_center_obj;
         Json::Value m_jsonSets;
-        int m_objs_count;
-        int m_z_layer_offset;
         std::stringstream m_objs_string;
         float m_draw_scale = 1;
         virtual bool init(cocos2d::CCArray* selected_obj);

@@ -1,0 +1,47 @@
+name: Found a bug? You should go here.
+description: Form to submit a bug.
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Please fill this form to help me understand your issue."
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Your platform
+      options:
+        - Windows
+        - Android64
+        - Android32
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe your issue
+      placeholder: When I click here it happens this
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce the bug
+      placeholder: |
+        1. Go somewhere
+        2. Click here
+        3. Click there
+    validations:
+      required: true
+  - type: checkboxes
+    id: geodeisupdated
+    attributes:
+      label: Extra fields
+      options:
+        - label: I updated Geode to latest version.
+          required: true
+        - label: I updated Geode Launcher (Android) to latest version.
+          required: true
+  - type: markdown
+    attributes:
+      value: Thanks for reporting this bug. I'll try to fix this as soon as possible.
