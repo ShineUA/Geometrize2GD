@@ -128,7 +128,7 @@ void ImportPopup::importJSON(CCObject* sender) {
             this->m_jsonSets.clear();
             std::ifstream jsonFile(path, std::ifstream::binary);
             try {
-                jsonFile >> this->m_jsonSets;   
+                this->m_jsonSets = nlohmann::json::parse(jsonFile);   
                 this->m_buttonMenu->getChildByID("import-btn")->setVisible(false);
                 this->m_buttonMenu->getChildByID("change-btn")->setVisible(true);
                 this->m_buttonMenu->getChildByID("draw-input")->setVisible(true);
@@ -138,27 +138,23 @@ void ImportPopup::importJSON(CCObject* sender) {
                 this->m_mainLayer->getChildByID("count-label")->setVisible(true);
                 this->m_mainLayer->getChildByID("file-label")->setVisible(true);
                 this->m_buttonMenu->getChildByID("convert-btn")->setVisible(true);
-                try {
-                    if(this->m_jsonSets.isMember("shapes")) {
-                        int count = 0;
-                        for(Json::Value::ArrayIndex x = 0; x != this->m_jsonSets["shapes"].size(); x++) {
-                            if(this->m_jsonSets["shapes"][x]["type"].asInt() == this->m_circle_type[0] && this->m_jsonSets["shapes"][x]["score"].asFloat() > 0 || this->m_jsonSets["shapes"][x]["type"].asInt() == this->m_circle_type[1] && this->m_jsonSets["shapes"][x]["score"].asFloat() > 0) {
-                                count++;
-                            }
-                        }
-                        std::stringstream ss;
-                        ss << count;
-                        static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", count).c_str());
-                    }
-                } catch(Json::LogicError) {
-                    int count = 0;
-                    for(Json::Value::ArrayIndex x = 0; x != this->m_jsonSets.size(); x++) {
-                        if(this->m_jsonSets[x]["type"].asInt() == this->m_circle_type[0] && this->m_jsonSets[x]["score"].asFloat() > 0 || this->m_jsonSets[x]["type"].asInt() == this->m_circle_type[1] && this->m_jsonSets[x]["score"].asFloat() > 0) {
+                int count = 0;
+                if(this->m_jsonSets.contains("shapes")) {
+                    for(nlohmann::json::iterator it = this->m_jsonSets["shapes"].begin(); it != this->m_jsonSets["shapes"].end(); ++it) {
+                        if(it.value()["type"].get<int>() == this->m_circle_type[0] && it.value()["score"].get<float>() > 0 || it.value()["type"].get<int>() == this->m_circle_type[1] && it.value()["score"].get<float>() > 0) {
                             count++;
                         }
                     }
-                    static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", count).c_str());
+                } else {
+                    for(nlohmann::json::iterator it = this->m_jsonSets.begin(); it != this->m_jsonSets.end(); ++it) {
+                        if(it.value()["type"].get<int>() == this->m_circle_type[0] && it.value()["score"].get<float>() > 0 || it.value()["type"].get<int>() == this->m_circle_type[1] && it.value()["score"].get<float>() > 0) {
+                            count++;
+                        }
+                    }
+                    
                 }
+            
+                static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", count).c_str());
                 static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("file-label"))->setString(fmt::format("File: {}", path.filename()).c_str());
                 FLAlertLayer::create("Info", "Succesfully imported file", "OK")->show();
             } catch(...) {
@@ -176,51 +172,47 @@ void ImportPopup::convert(CCObject* sender) {
         try {
             this->m_draw_scale = std::stof(static_cast<InputNode*>(this->m_buttonMenu->getChildByID("draw-input"))->getString());
             int z_order = std::stoi(static_cast<InputNode*>(this->m_buttonMenu->getChildByID("zlayer-input"))->getString());
-            try {
-                if(this->m_jsonSets.isMember("shapes")) {
-                    for (Json::Value::ArrayIndex x = 0; x != this->m_jsonSets["shapes"].size(); x++) {
-                        if(this->m_jsonSets["shapes"][x]["type"].asInt() == this->m_circle_type[0] && this->m_jsonSets["shapes"][x]["score"].asFloat() > 0 || this->m_jsonSets["shapes"][x]["type"].asInt() == this->m_circle_type[1] && this->m_jsonSets["shapes"][x]["score"].asFloat() > 0) {
-                            this->m_objs_string << "1," << this->m_circle_id;
-                            this->m_objs_string << ",2," << this->m_jsonSets["shapes"][x]["data"][0].asFloat() * this->m_draw_scale + this->m_center_obj->getPositionX();
-                            this->m_objs_string << ",3," << this->m_jsonSets["shapes"][x]["data"][1].asFloat() * this->m_draw_scale + this->m_center_obj->getPositionY();
-                            this->m_objs_string << ",32," << this->m_jsonSets["shapes"][x]["data"][2].asFloat() * this->m_draw_scale / 4;
-                            this->m_objs_string << ",41," << "1";
-                            this->m_objs_string << ",42," << "1";
-                            float h, s, v;
-                            auto r = this->m_jsonSets["shapes"][x]["color"][0].asFloat() / 255.f;
-                            auto g = this->m_jsonSets["shapes"][x]["color"][1].asFloat() / 255.f;
-                            auto b = this->m_jsonSets["shapes"][x]["color"][2].asFloat() / 255.f;
-                            this->rgb_to_hsv(r, g, b, h, s, v);
-                            this->m_objs_string << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                            this->m_objs_string << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                            this->m_objs_string << ",25," << z_order;
-                            if(x < this->m_jsonSets["shapes"].size() - 1) {
-                                this->m_objs_string << ";";
-                            }
-                            z_order++;
-                        }
-                    }
-                }
-            } catch(Json::LogicError) {
-                for (Json::Value::ArrayIndex x = 0; x != this->m_jsonSets.size(); x++) {
-                    if(this->m_jsonSets[x]["type"].asInt() == this->m_circle_type[0] && this->m_jsonSets[x]["score"].asFloat() > 0 || this->m_jsonSets[x]["type"].asInt() == this->m_circle_type[1] && this->m_jsonSets[x]["score"].asFloat() > 0) {
+            if(this->m_jsonSets.contains("shapes")) {
+                for (nlohmann::json::iterator it = this->m_jsonSets["shapes"].begin(); it != this->m_jsonSets["shapes"].end(); ++it) {
+                    if(it.value()["type"].get<int>() == this->m_circle_type[0] && it.value()["score"].get<float>() > 0 || it.value()["type"].get<int>() == this->m_circle_type[1] && it.value()["score"].get<float>() > 0) {
                         this->m_objs_string << "1," << this->m_circle_id;
-                        this->m_objs_string << ",2," << this->m_jsonSets[x]["data"][0].asFloat() * this->m_draw_scale + this->m_center_obj->getPositionX();
-                        this->m_objs_string << ",3," << this->m_jsonSets[x]["data"][1].asFloat() * this->m_draw_scale + this->m_center_obj->getPositionY();
-                        this->m_objs_string << ",32," << this->m_jsonSets[x]["data"][2].asFloat() * this->m_draw_scale / 4;
+                        this->m_objs_string << ",2," << it.value()["data"][0].get<float>() * this->m_draw_scale + this->m_center_obj->getPositionX();
+                        this->m_objs_string << ",3," << it.value()["data"][1].get<float>() * this->m_draw_scale + this->m_center_obj->getPositionY();
+                        this->m_objs_string << ",32," << it.value()["data"][2].get<float>() * this->m_draw_scale / 4;
                         this->m_objs_string << ",41," << "1";
                         this->m_objs_string << ",42," << "1";
                         float h, s, v;
-                        auto r = this->m_jsonSets[x]["color"][0].asFloat() / 255.f;
-                        auto g = this->m_jsonSets[x]["color"][1].asFloat() / 255.f;
-                        auto b = this->m_jsonSets[x]["color"][2].asFloat() / 255.f;
+                        auto r = it.value()["color"][0].get<float>() / 255.f;
+                        auto g = it.value()["color"][1].get<float>() / 255.f;
+                        auto b = it.value()["color"][2].get<float>() / 255.f;
                         this->rgb_to_hsv(r, g, b, h, s, v);
                         this->m_objs_string << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
                         this->m_objs_string << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
                         this->m_objs_string << ",25," << z_order;
-                        if(x < this->m_jsonSets.size() - 1) {
+                        if(it != this->m_jsonSets["shapes"].end() - 1) {
                             this->m_objs_string << ";";
                         }
+                        z_order++;
+                    }
+                }
+            } else {
+                for (nlohmann::json::iterator it = this->m_jsonSets.begin(); it != this->m_jsonSets.end(); ++it) {
+                    if(it.value()["type"].get<int>() == this->m_circle_type[0] && it.value()["score"].get<float>() > 0 || it.value()["type"].get<int>() == this->m_circle_type[1] && it.value()["score"].get<float>() > 0) {
+                        this->m_objs_string << "1," << this->m_circle_id;
+                        this->m_objs_string << ",2," << it.value()["data"][0].get<float>() * this->m_draw_scale + this->m_center_obj->getPositionX();
+                        this->m_objs_string << ",3," << it.value()["data"][1].get<float>() * this->m_draw_scale + this->m_center_obj->getPositionY();
+                        this->m_objs_string << ",32," << it.value()["data"][2].get<float>() * this->m_draw_scale / 4;
+                        this->m_objs_string << ",41," << "1";
+                        this->m_objs_string << ",42," << "1";
+                        float h, s, v;
+                        auto r = it.value()["color"][0].get<float>() / 255.f;
+                        auto g = it.value()["color"][1].get<float>() / 255.f;
+                        auto b = it.value()["color"][2].get<float>() / 255.f;
+                        this->rgb_to_hsv(r, g, b, h, s, v);
+                        this->m_objs_string << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objs_string << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objs_string << ",25," << z_order;
+                        this->m_objs_string << ";";
                         z_order++;
                     } // else if(this->m_jsonSets[x]["type"].asInt() == this->m_cube_type[0] && this->m_jsonSets[x]["score"].asFloat() > 0 || this->m_jsonSets[x]["type"].asInt() == this->m_cube_type[1] && this->m_jsonSets[x]["score"].asFloat() > 0) {
                     //     this->m_objs_string << "1," << this->m_cube_id;
@@ -245,7 +237,6 @@ void ImportPopup::convert(CCObject* sender) {
                     // }
                 }
             }
-            
             auto curr_editor_layer = LevelEditorLayer::get();
             curr_editor_layer->createObjectsFromString(this->m_objs_string.str().c_str(), true, true);
             this->m_jsonSets.clear();
@@ -302,8 +293,8 @@ void ImportPopup::rgb_to_hsv(float& fR, float& fG, float fB, float& fH, float& f
 }
 
 void ImportPopup::checkAlert(CCObject* sender) {
-    try {
-        if(this->m_jsonSets.isMember("shapes") && this->m_jsonSets["shapes"].size() > 5000) {
+    if(this->m_jsonSets.contains("shapes")) {
+        if(this->m_jsonSets["shapes"].size() > 5000) {
             geode::createQuickPopup(
                 "Alert",            // title
                 "This will place more than <cy>5000 objects</c>\nAre you sure?",   // content
@@ -317,7 +308,7 @@ void ImportPopup::checkAlert(CCObject* sender) {
         } else {
             this->convert(nullptr);
         }
-    } catch (Json::LogicError) {
+    } else {
         if(this->m_jsonSets.size() > 5000) {
             geode::createQuickPopup(
                 "Alert",            // title

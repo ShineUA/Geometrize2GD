@@ -3,9 +3,10 @@
 #include <cstring>
 #include <fstream>
 #include <sstream>
-#include <json/json.h>
+#include <nlohmann/json.hpp>
 #include <cstdlib>
 #include <cmath>
+#include <filesystem>
 
 using namespace geode::prelude;
 
@@ -22,7 +23,7 @@ class ImportPopup : public FLAlertLayer, TextInputDelegate, FLAlertLayerProtocol
             1
         };
         GameObject* m_center_obj;
-        Json::Value m_jsonSets;
+        nlohmann::json m_jsonSets;
         std::stringstream m_objs_string;
         float m_draw_scale = 1;
         virtual bool init(cocos2d::CCArray* selected_obj);
