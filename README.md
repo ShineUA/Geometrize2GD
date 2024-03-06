@@ -9,7 +9,7 @@
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/1.png)
 
-3. Set max shapes (objects) cap.
+3. Set max shapes (objects) cap and open image.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/2.png)
 
