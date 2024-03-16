@@ -23,5 +23,6 @@ class $modify(MyEditorUI, EditorUI) {
 		auto cols = GameManager::sharedState()->getIntGameVariable("0050");
 		// TODO: replace with reloadItemsInNormalSize
 		m_editButtonBar->reloadItems(rows, cols);
+		
 	}
 };

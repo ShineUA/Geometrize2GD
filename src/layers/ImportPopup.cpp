@@ -3,7 +3,7 @@
 
 ImportPopup* ImportPopup::create(CCArray* selected_obj) {
     ImportPopup* ret = new ImportPopup();
-    if (ret && ret->init(selected_obj)) {
+    if (ret && ret->init(385.f, 245.f, selected_obj)) {
         ret->autorelease();
     } else {
         delete ret;
@@ -12,27 +12,9 @@ ImportPopup* ImportPopup::create(CCArray* selected_obj) {
     return ret;
 }
 
-bool ImportPopup::init(CCArray* selected_obj) {
-    if (!this->initWithColor({0, 0, 0, 75})) return false;
-
-    this->m_noElasticity = true;
-    geode::cocos::handleTouchPriority(this);
-    this->registerWithTouchDispatcher();
-    this->setTouchEnabled(true);
-    this->setKeypadEnabled(true);
-    this->setZOrder(150);
+bool ImportPopup::setup(CCArray* selected_obj) {
     this->m_center_obj = CCArrayExt<GameObject*>(selected_obj)[0];
-
     auto winSize = CCDirector::get()->getWinSize();
-
-    auto layer = CCLayer::create();
-    auto menu = CCMenu::create();
-    this->m_mainLayer = layer;
-    this->m_buttonMenu = menu;
-    
-    auto bg = CCScale9Sprite::create("GJ_square01.png");
-    bg->setContentSize(ccp(385.f, 245.f));
-    bg->setPosition(winSize / 2);
 
     auto label_count = CCLabelBMFont::create("Objects: 0", "bigFont.fnt");
     label_count->setPosition({winSize.width / 2, winSize.height / 2 - 65.f});
@@ -51,12 +33,6 @@ bool ImportPopup::init(CCArray* selected_obj) {
     zlayer_label->setVisible(false);
     zlayer_label->setID("zlayer-label");
     zlayer_label->setScale(0.325);
-
-    auto close_btn_spr = CCSprite::createWithSpriteFrameName("GJ_closeBtn_001.png");
-    auto close_btn = CCMenuItemSpriteExtra::create(
-        close_btn_spr, this, menu_selector(ImportPopup::onExitBtn)
-    );
-    close_btn->setPosition({-188.f, 119.f});
 
     auto selectedFileLabel = CCLabelBMFont::create("", "bigFont.fnt");
     selectedFileLabel->setColor({0,255,0});
@@ -103,22 +79,16 @@ bool ImportPopup::init(CCArray* selected_obj) {
     z_layeroff_input->getInput()->setLabelPlaceholderScale(0.6);
     z_layeroff_input->getInput()->setMaxLabelScale(0.6);
     
-    layer->addChild(bg);
-    layer->addChild(selectedFileLabel);
-    layer->addChild(label_count);
-    layer->addChild(draw_label);
-    layer->addChild(zlayer_label);
+    this->m_mainLayer->addChild(selectedFileLabel);
+    this->m_mainLayer->addChild(label_count);
+    this->m_mainLayer->addChild(draw_label);
+    this->m_mainLayer->addChild(zlayer_label);
     
-    layer->addChild(menu);
-    menu->addChild(close_btn);
-    menu->addChild(import_json_btn);
-    menu->addChild(change_json_btn);
-    menu->addChild(convert_btn);
-    menu->addChild(draw_scale_input);
-    menu->addChild(z_layeroff_input);
-
-    this->addChild(layer);
-
+    this->m_buttonMenu->addChild(import_json_btn);
+    this->m_buttonMenu->addChild(change_json_btn);
+    this->m_buttonMenu->addChild(convert_btn);
+    this->m_buttonMenu->addChild(draw_scale_input);
+    this->m_buttonMenu->addChild(z_layeroff_input);
     return true;
 }
 
@@ -151,7 +121,6 @@ void ImportPopup::importJSON(CCObject* sender) {
                             count++;
                         }
                     }
-                    
                 }
             
                 static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", count).c_str());
@@ -248,16 +217,6 @@ void ImportPopup::convert(CCObject* sender) {
     } else {
         FLAlertLayer::create("Info", "Nothing to convert!", "OK")->show();
     }
-}
-
-void ImportPopup::onExitBtn(CCObject* sender) {
-    this->keyBackClicked();
-}
-
-void ImportPopup::keyBackClicked() {
-    this->setTouchEnabled(false);
-    this->setKeypadEnabled(false);
-    this->removeFromParentAndCleanup(true);
 }
 
 void ImportPopup::rgb_to_hsv(float& fR, float& fG, float fB, float& fH, float& fS, float& fV) {

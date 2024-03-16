@@ -10,7 +10,7 @@
 
 using namespace geode::prelude;
 
-class ImportPopup : public FLAlertLayer, TextInputDelegate, FLAlertLayerProtocol {
+class ImportPopup : public geode::Popup<cocos2d::CCArray*> {
     protected:
         const int m_circle_id = 1764;
         const int m_cube_id = 211;
@@ -26,13 +26,11 @@ class ImportPopup : public FLAlertLayer, TextInputDelegate, FLAlertLayerProtocol
         nlohmann::json m_jsonSets;
         std::stringstream m_objs_string;
         float m_draw_scale = 1;
-        virtual bool init(cocos2d::CCArray* selected_obj);
+        virtual bool setup(cocos2d::CCArray* selected_obj) override;
         virtual void rgb_to_hsv(float& fR, float& fG, float fB, float& fH, float& fS, float& fV);
-        virtual void keyBackClicked() override;
         virtual void importJSON(cocos2d::CCObject* sender);
         virtual void checkAlert(cocos2d::CCObject* sender);
         virtual void convert(cocos2d::CCObject* sender);
-        virtual void onExitBtn(cocos2d::CCObject* sender);
     public:
         static ImportPopup* create(cocos2d::CCArray* selected_obj);
 };
