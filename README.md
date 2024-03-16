@@ -9,7 +9,7 @@
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/1.png)
 
-3. Set max shapes (objects) cap.
+3. Set max shapes (objects) cap and open image.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/2.png)
 
@@ -70,7 +70,7 @@
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/8.png)
 
-5. The last one: Set color of imported art/image to black.
+5. The last one: Set color of created objects to black.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/10.png)
 
