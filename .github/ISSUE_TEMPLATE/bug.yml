@@ -42,6 +42,8 @@ body:
           required: true
         - label: I updated Geode Launcher (Android) to latest version.
           required: true
+        - label: I updated this mod to latest version.
+          required: true
   - type: markdown
     attributes:
       value: Thanks for reporting this bug. I'll try to fix this as soon as possible.
