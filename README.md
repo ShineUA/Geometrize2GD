@@ -68,11 +68,6 @@
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/8.png)
 
-5. The last one: Set color of created objects to black.
-
-![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/10.png)
-
 6. Now it's done. Enjoy your result!
-   P.S: Yeah, you will need to flip it vertical.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/9.png)
