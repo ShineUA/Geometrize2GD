@@ -1,8 +1,8 @@
 #include "ImportPopup.h"
 #include <fmt/format.h>
 
-gd::set<short> getGroupIDs(GameObject* obj) {
-    gd::set<short> res;
+std::set<short> getGroupIDs(GameObject* obj) {
+    std::set<short> res;
 
     if (obj->m_groups && obj->m_groups->at(0))
         for (auto i = 0; i < obj->m_groupCount; i++)
