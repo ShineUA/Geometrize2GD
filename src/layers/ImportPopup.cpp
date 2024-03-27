@@ -1,6 +1,47 @@
 #include "ImportPopup.h"
 #include <fmt/format.h>
 
+gd::set<short> getGroupIDs(GameObject* obj) {
+    gd::set<short> res;
+
+    if (obj->m_groups && obj->m_groups->at(0))
+        for (auto i = 0; i < obj->m_groupCount; i++)
+            res.insert(obj->m_groups->at(i));
+    return res;
+}
+
+int nextFree(int offset)
+{
+    if(offset <= 0)
+    {
+        offset = 1;
+    }
+
+    std::set<short> usedGroups;
+    for (const auto& obj : CCArrayExt<GameObject*>(GameManager::sharedState()->m_levelEditorLayer->m_objects))
+    {
+        auto groups = getGroupIDs(obj);
+        for(const auto& group : groups)
+        {
+            if(group >= offset)
+            {
+                usedGroups.insert(group);
+            }
+        }
+    }
+    
+    int nextFreeGroup = offset;
+    for(short used : usedGroups)
+    {
+        if(nextFreeGroup != used)
+        {
+            return nextFreeGroup;
+        }
+        nextFreeGroup += 1;
+    }
+    return nextFreeGroup;
+}
+
 ImportPopup* ImportPopup::create(CCArray* selected_obj) {
     ImportPopup* ret = new ImportPopup();
     if (ret && ret->init(385.f, 245.f, selected_obj)) {
@@ -13,7 +54,7 @@ ImportPopup* ImportPopup::create(CCArray* selected_obj) {
 }
 
 bool ImportPopup::setup(CCArray* selected_obj) {
-    this->m_center_obj = CCArrayExt<GameObject*>(selected_obj)[0];
+    this->m_centerObj = CCArrayExt<GameObject*>(selected_obj)[0];
     auto winSize = CCDirector::get()->getWinSize();
 
     auto label_count = CCLabelBMFont::create("Objects: 0", "bigFont.fnt");
@@ -111,18 +152,17 @@ void ImportPopup::importJSON(CCObject* sender) {
                 int count = 0;
                 if(this->m_jsonSets.contains("shapes")) {
                     for(nlohmann::json::iterator it = this->m_jsonSets["shapes"].begin(); it != this->m_jsonSets["shapes"].end(); ++it) {
-                        if(it.value()["type"].get<int>() == this->m_circle_type[0] && it.value()["score"].get<float>() > 0 || it.value()["type"].get<int>() == this->m_circle_type[1] && it.value()["score"].get<float>() > 0) {
+                        if(std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), it.value()["type"].get<int>()) != this->m_supportedObjsDesktop.end() && it.value()["score"].get<float>() > 0) {
                             count++;
                         }
                     }
                 } else {
                     for(nlohmann::json::iterator it = this->m_jsonSets.begin(); it != this->m_jsonSets.end(); ++it) {
-                        if(it.value()["type"].get<int>() == this->m_circle_type[0] && it.value()["score"].get<float>() > 0 || it.value()["type"].get<int>() == this->m_circle_type[1] && it.value()["score"].get<float>() > 0) {
+                        if(std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), it.value()["type"].get<int>()) != this->m_supportedObjsWeb.end() && it.value()["score"].get<float>() > 0) {
                             count++;
                         }
                     }
                 }
-            
                 static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", count).c_str());
                 static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("file-label"))->setString(fmt::format("File: {}", path.filename()).c_str());
                 FLAlertLayer::create("Info", "Succesfully imported file", "OK")->show();
@@ -139,87 +179,199 @@ void ImportPopup::importJSON(CCObject* sender) {
 void ImportPopup::convert(CCObject* sender) {
     if(!this->m_jsonSets.empty()) {
         try {
-            this->m_draw_scale = std::stof(static_cast<InputNode*>(this->m_buttonMenu->getChildByID("draw-input"))->getString());
+            bool isTransparent = false;
+            float transparency;
+            int freeGroup = nextFree(0);
+            this->m_drawScale = std::stof(static_cast<InputNode*>(this->m_buttonMenu->getChildByID("draw-input"))->getString());
             int z_order = std::stoi(static_cast<InputNode*>(this->m_buttonMenu->getChildByID("zlayer-input"))->getString());
             if(this->m_jsonSets.contains("shapes")) {
                 for (nlohmann::json::iterator it = this->m_jsonSets["shapes"].begin(); it != this->m_jsonSets["shapes"].end(); ++it) {
-                    if(it.value()["type"].get<int>() == this->m_circle_type[0] && it.value()["score"].get<float>() > 0 || it.value()["type"].get<int>() == this->m_circle_type[1] && it.value()["score"].get<float>() > 0) {
-                        this->m_objs_string << "1," << this->m_circle_id;
-                        this->m_objs_string << ",2," << it.value()["data"][0].get<float>() * this->m_draw_scale + this->m_center_obj->getPositionX();
-                        this->m_objs_string << ",3," << it.value()["data"][1].get<float>() * this->m_draw_scale + this->m_center_obj->getPositionY();
-                        this->m_objs_string << ",32," << it.value()["data"][2].get<float>() * this->m_draw_scale / 4;
-                        this->m_objs_string << ",41," << "1";
-                        this->m_objs_string << ",42," << "1";
+                    if(it.value()["score"].get<float>() > 0 && it.value()["color"][3].get<int>() < 255 && std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), it.value()["type"].get<int>()) != this->m_supportedObjsDesktop.end() && it.value() != this->m_jsonSets["shapes"][0] && !isTransparent) {
+                        isTransparent = true;
+                        transparency = it.value()["color"][3].get<float>() / 255;
+                    }
+                    if(it.value()["type"].get<int>() == this->m_supportedObjsDesktop[0] && it.value()["score"].get<float>() > 0) {
+                        this->m_objsString << "1," << this->m_circle_id;
+                        this->m_objsString << ",2," << it.value()["data"][0].get<float>() * this->m_drawScale + this->m_centerObj->getPositionX();
+                        this->m_objsString << ",3," << it.value()["data"][1].get<float>() * this->m_drawScale + this->m_centerObj->getPositionY();
+                        this->m_objsString << ",32," << it.value()["data"][2].get<float>() * this->m_drawScale / 4;
+                        this->m_objsString << ",41," << "1";
+                        this->m_objsString << ",42," << "1";
+                        this->m_objsString << ",21,1010,22,1010";
                         float h, s, v;
                         auto r = it.value()["color"][0].get<float>() / 255.f;
                         auto g = it.value()["color"][1].get<float>() / 255.f;
                         auto b = it.value()["color"][2].get<float>() / 255.f;
-                        this->rgb_to_hsv(r, g, b, h, s, v);
-                        this->m_objs_string << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                        this->m_objs_string << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                        this->m_objs_string << ",25," << z_order;
-                        if(it != this->m_jsonSets["shapes"].end() - 1) {
-                            this->m_objs_string << ";";
-                        }
+                        this->rgbToHsv(r, g, b, h, s, v);
+                        this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objsString << ",25," << z_order;
+                        this->m_objsString << ",57," << freeGroup;
+                        this->m_objsString << ";";
+                        z_order++;
+                    } else if(it.value()["type"].get<int>() == this->m_supportedObjsDesktop[1] && it.value()["score"].get<float>() > 0) {
+                        this->m_objsString << "1," << this->m_circle_id;
+                        this->m_objsString << ",2," << it.value()["data"][0].get<float>() * this->m_drawScale + this->m_centerObj->getPositionX();
+                        this->m_objsString << ",3," << it.value()["data"][1].get<float>() * this->m_drawScale + this->m_centerObj->getPositionY();
+                        this->m_objsString << ",128," << it.value()["data"][2].get<float>() * this->m_drawScale / 4;
+                        this->m_objsString << ",129," << it.value()["data"][3].get<float>() * this->m_drawScale / 4;
+                        this->m_objsString << ",41," << "1";
+                        this->m_objsString << ",42," << "1";
+                        this->m_objsString << ",21,1010,22,1010";
+                        float h, s, v;
+                        auto r = it.value()["color"][0].get<float>() / 255.f;
+                        auto g = it.value()["color"][1].get<float>() / 255.f;
+                        auto b = it.value()["color"][2].get<float>() / 255.f;
+                        this->rgbToHsv(r, g, b, h, s, v);
+                        this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objsString << ",25," << z_order;
+                        this->m_objsString << ",57," << freeGroup;
+                        this->m_objsString << ";";
+                        z_order++;
+                    } else if(it.value()["type"].get<int>() == this->m_supportedObjsDesktop[2] && it.value()["score"].get<float>() > 0) {
+                        this->m_objsString << "1," << this->m_circle_id;
+                        this->m_objsString << ",2," << it.value()["data"][0].get<float>() * this->m_drawScale + this->m_centerObj->getPositionX();
+                        this->m_objsString << ",3," << it.value()["data"][1].get<float>() * this->m_drawScale + this->m_centerObj->getPositionY();
+                        this->m_objsString << ",128," << it.value()["data"][2].get<float>() * this->m_drawScale / 4;
+                        this->m_objsString << ",129," << it.value()["data"][3].get<float>() * this->m_drawScale / 4;
+                        this->m_objsString << ",6," << "-" << it.value()["data"][4].get<float>();
+                        this->m_objsString << ",41," << "1";
+                        this->m_objsString << ",42," << "1";
+                        this->m_objsString << ",21,1010,22,1010";
+                        float h, s, v;
+                        auto r = it.value()["color"][0].get<float>() / 255.f;
+                        auto g = it.value()["color"][1].get<float>() / 255.f;
+                        auto b = it.value()["color"][2].get<float>() / 255.f;
+                        this->rgbToHsv(r, g, b, h, s, v);
+                        this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objsString << ",25," << z_order;
+                        this->m_objsString << ",57," << freeGroup;
+                        this->m_objsString << ";";
                         z_order++;
                     }
                 }
             } else {
                 for (nlohmann::json::iterator it = this->m_jsonSets.begin(); it != this->m_jsonSets.end(); ++it) {
-                    if(it.value()["type"].get<int>() == this->m_circle_type[0] && it.value()["score"].get<float>() > 0 || it.value()["type"].get<int>() == this->m_circle_type[1] && it.value()["score"].get<float>() > 0) {
-                        this->m_objs_string << "1," << this->m_circle_id;
-                        this->m_objs_string << ",2," << it.value()["data"][0].get<float>() * this->m_draw_scale + this->m_center_obj->getPositionX();
-                        this->m_objs_string << ",3," << it.value()["data"][1].get<float>() * this->m_draw_scale + this->m_center_obj->getPositionY();
-                        this->m_objs_string << ",32," << it.value()["data"][2].get<float>() * this->m_draw_scale / 4;
-                        this->m_objs_string << ",41," << "1";
-                        this->m_objs_string << ",42," << "1";
+                    if(it.value()["score"].get<float>() > 0 && it.value()["color"][3].get<int>() < 255 && std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), it.value()["type"].get<int>()) != this->m_supportedObjsWeb.end() && it.value() != this->m_jsonSets[0] && !isTransparent) {
+                        isTransparent = true;
+                        transparency = it.value()["color"][3].get<float>() / 255;
+                    }
+                    if(it.value()["type"].get<int>() == this->m_supportedObjsWeb[0] && it.value()["score"].get<float>() > 0) {
+                        this->m_objsString << "1," << this->m_circle_id;
+                        this->m_objsString << ",2," << it.value()["data"][0].get<float>() * this->m_drawScale + this->m_centerObj->getPositionX();
+                        this->m_objsString << ",3," << it.value()["data"][1].get<float>() * this->m_drawScale + this->m_centerObj->getPositionY();
+                        this->m_objsString << ",32," << it.value()["data"][2].get<float>() * this->m_drawScale / 4;
+                        this->m_objsString << ",41," << "1";
+                        this->m_objsString << ",42," << "1";
+                        this->m_objsString << ",21,1010,22,1010";
                         float h, s, v;
                         auto r = it.value()["color"][0].get<float>() / 255.f;
                         auto g = it.value()["color"][1].get<float>() / 255.f;
                         auto b = it.value()["color"][2].get<float>() / 255.f;
-                        this->rgb_to_hsv(r, g, b, h, s, v);
-                        this->m_objs_string << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                        this->m_objs_string << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                        this->m_objs_string << ",25," << z_order;
-                        this->m_objs_string << ";";
+                        this->rgbToHsv(r, g, b, h, s, v);
+                        this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objsString << ",25," << z_order;
+                        this->m_objsString << ",57," << freeGroup;
+                        this->m_objsString << ";";
                         z_order++;
-                    } // else if(this->m_jsonSets[x]["type"].asInt() == this->m_cube_type[0] && this->m_jsonSets[x]["score"].asFloat() > 0 || this->m_jsonSets[x]["type"].asInt() == this->m_cube_type[1] && this->m_jsonSets[x]["score"].asFloat() > 0) {
-                    //     this->m_objs_string << "1," << this->m_cube_id;
-                    //     this->m_objs_string << ",2," << this->m_jsonSets[x]["data"][0].asFloat() * this->m_draw_scale + this->m_center_obj->getPositionX();
-                    //     this->m_objs_string << ",3," << this->m_jsonSets[x]["data"][1].asFloat() * this->m_draw_scale + this->m_center_obj->getPositionY() + 30;
-                    //     this->m_objs_string << ",128," << this->m_jsonSets[x]["data"][3].asFloat() * this->m_draw_scale / 15 / 2 / 2 / 2;
-                    //     this->m_objs_string << ",129," << this->m_jsonSets[x]["data"][2].asFloat() * this->m_draw_scale / 15 / 2 / 2;
-                    //     this->m_objs_string << ",41," << "1";
-                    //     this->m_objs_string << ",42," << "1";
+                    }// else if(it.value()["type"].get<int>() == this->m_supportedObjsWeb[1] && it.value()["score"].get<float>() > 0) {
+                    //     this->m_objsString << "1," << this->m_rect_id;
+                    //     this->m_objsString << ",2," << (it.value()["data"][0].get<float>() + it.value()["data"][2].get<float>() / 4 / 2) * this->m_drawScale + this->m_centerObj->getPositionX();
+                    //     this->m_objsString << ",3," << (it.value()["data"][1].get<float>() + it.value()["data"][3].get<float>() / 4 / 2) * this->m_drawScale + this->m_centerObj->getPositionY();
+                    //     this->m_objsString << ",128," << (it.value()["data"][0].get<float>() - it.value()["data"][2].get<float>()) * this->m_drawScale / 4;
+                    //     this->m_objsString << ",129," << (it.value()["data"][1].get<float>() - it.value()["data"][3].get<float>()) * this->m_drawScale / 4;
+                    //     this->m_objsString << ",41," << "1";
+                    //     this->m_objsString << ",42," << "1";
+                    //     this->m_objsString << ",21,1010,22,1010";
                     //     float h, s, v;
-                    //     auto r = this->m_jsonSets[x]["color"][0].asFloat() / 255.f;
-                    //     auto g = this->m_jsonSets[x]["color"][1].asFloat() / 255.f;
-                    //     auto b = this->m_jsonSets[x]["color"][2].asFloat() / 255.f;
-                    //     this->rgb_to_hsv(r, g, b, h, s, v);
-                    //     this->m_objs_string << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                    //     this->m_objs_string << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                    //     this->m_objs_string << ",25," << z_order;
-                    //     if(x < this->m_jsonSets.size() - 1) {
-                    //         this->m_objs_string << ";";
-                    //     }
+                    //     auto r = it.value()["color"][0].get<float>() / 255.f;
+                    //     auto g = it.value()["color"][1].get<float>() / 255.f;
+                    //     auto b = it.value()["color"][2].get<float>() / 255.f;
+                    //     this->rgbToHsv(r, g, b, h, s, v);
+                    //     this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                    //     this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                    //     this->m_objsString << ",25," << z_order;
+                    //     this->m_objsString << ",57," << freeGroup;
+                    //     this->m_objsString << ";";
                     //     z_order++;
-                    // }
+                    // } 
+                    else if(it.value()["type"].get<int>() == this->m_supportedObjsWeb[1] && it.value()["score"].get<float>() > 0) {
+                        this->m_objsString << "1," << this->m_circle_id;
+                        this->m_objsString << ",2," << it.value()["data"][0].get<float>() * this->m_drawScale + this->m_centerObj->getPositionX();
+                        this->m_objsString << ",3," << it.value()["data"][1].get<float>() * this->m_drawScale + this->m_centerObj->getPositionY();
+                        this->m_objsString << ",128," << it.value()["data"][2].get<float>() * this->m_drawScale / 4;
+                        this->m_objsString << ",129," << it.value()["data"][3].get<float>() * this->m_drawScale / 4;
+                        this->m_objsString << ",41," << "1";
+                        this->m_objsString << ",42," << "1";
+                        this->m_objsString << ",21,1010,22,1010";
+                        float h, s, v;
+                        auto r = it.value()["color"][0].get<float>() / 255.f;
+                        auto g = it.value()["color"][1].get<float>() / 255.f;
+                        auto b = it.value()["color"][2].get<float>() / 255.f;
+                        this->rgbToHsv(r, g, b, h, s, v);
+                        this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objsString << ",25," << z_order;
+                        this->m_objsString << ",57," << freeGroup;
+                        this->m_objsString << ";";
+                        z_order++;
+                    } else if(it.value()["type"].get<int>() == this->m_supportedObjsWeb[2] && it.value()["score"].get<float>() > 0) {
+                        this->m_objsString << "1," << this->m_circle_id;
+                        this->m_objsString << ",2," << it.value()["data"][0].get<float>() * this->m_drawScale + this->m_centerObj->getPositionX();
+                        this->m_objsString << ",3," << it.value()["data"][1].get<float>() * this->m_drawScale + this->m_centerObj->getPositionY();
+                        this->m_objsString << ",128," << it.value()["data"][2].get<float>() * this->m_drawScale / 4;
+                        this->m_objsString << ",129," << it.value()["data"][3].get<float>() * this->m_drawScale / 4;
+                        this->m_objsString << ",6," << "-" << it.value()["data"][4].get<float>();
+                        this->m_objsString << ",41," << "1";
+                        this->m_objsString << ",42," << "1";
+                        this->m_objsString << ",21,1010,22,1010";
+                        float h, s, v;
+                        auto r = it.value()["color"][0].get<float>() / 255.f;
+                        auto g = it.value()["color"][1].get<float>() / 255.f;
+                        auto b = it.value()["color"][2].get<float>() / 255.f;
+                        this->rgbToHsv(r, g, b, h, s, v);
+                        this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
+                        this->m_objsString << ",25," << z_order;
+                        this->m_objsString << ",57," << freeGroup;
+                        this->m_objsString << ";";
+                        z_order++;
+                    }
                 }
             }
+            if(this->m_objsString.str().empty()) {
+                FLAlertLayer::create(
+                    "Info",
+                    "No object added.",
+                    "OK"
+                )->show();
+                return this->onClose(nullptr);
+            }
             auto curr_editor_layer = LevelEditorLayer::get();
-            curr_editor_layer->createObjectsFromString(this->m_objs_string.str().c_str(), true, true);
+            auto curr_editor_ui = curr_editor_layer->m_editorUI;
+            curr_editor_layer->removeObject(this->m_centerObj, false);
+            auto obj_arr = curr_editor_layer->createObjectsFromString(this->m_objsString.str().c_str(), true, true);
+            curr_editor_ui->flipObjectsY(obj_arr);
+            if(isTransparent) {
+                obj_arr->addObject(curr_editor_layer->createObjectsFromString(fmt::format("1,1007,2,-15,3,15,51,{},35,{}", freeGroup, transparency).c_str(), true, true)->objectAtIndex(0));
+            }
+            curr_editor_layer->m_undoObjects->addObject(UndoObject::createWithArray(obj_arr, UndoCommand::Paste));
+            curr_editor_ui->selectObjects(obj_arr, true);
             this->m_jsonSets.clear();
             this->keyBackClicked();
             FLAlertLayer::create("Info", "Successfully converted to gd objects!", "OK")->show();
         } catch(...) {
-            FLAlertLayer::create("Error", "<cr>Wrong file format!</c> File must be a <cy>JSON</c> output from <cg>Geometrize Demo Website!</c>", "OK")->show();
+            FLAlertLayer::create("Error", "<cr>Wrong file format!</c> File must be a <cy>JSON</c> output from <cg>Geometrize Demo Website</c> or <cg>Geometrize Desktop App</c>!", "OK")->show();
         }
     } else {
         FLAlertLayer::create("Info", "Nothing to convert!", "OK")->show();
     }
 }
 
-void ImportPopup::rgb_to_hsv(float& fR, float& fG, float fB, float& fH, float& fS, float& fV) {
+void ImportPopup::rgbToHsv(float& fR, float& fG, float fB, float& fH, float& fS, float& fV) {
     float fCMax = std::max(std::max(fR, fG), fB);
   float fCMin = std::min(std::min(fR, fG), fB);
   float fDelta = fCMax - fCMin;

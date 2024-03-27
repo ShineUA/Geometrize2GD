@@ -13,21 +13,27 @@ using namespace geode::prelude;
 class ImportPopup : public geode::Popup<cocos2d::CCArray*> {
     protected:
         const int m_circle_id = 1764;
-        const int m_cube_id = 211;
-        const std::array<int, 2> m_circle_type = {
-            32,
-            5
+        const int m_rect_id = 211;
+        const std::array<int, 3> m_supportedObjsWeb = {
+            5, // circle
+            // 0, // rectangle
+            3, // ellipse
+            4//, // rotated ellipse
+            //1 // rotated rectangle
         };
-        const std::array<int, 2> m_cube_type = {
-            0,
-            1
+        const std::array<int, 3> m_supportedObjsDesktop = {
+            32, // same as web
+            // 1,
+            8,
+            16// ,
+            // 2
         };
-        GameObject* m_center_obj;
+        GameObject* m_centerObj;
         nlohmann::json m_jsonSets;
-        std::stringstream m_objs_string;
-        float m_draw_scale = 1;
+        std::stringstream m_objsString;
+        float m_drawScale = 1;
         virtual bool setup(cocos2d::CCArray* selected_obj) override;
-        virtual void rgb_to_hsv(float& fR, float& fG, float fB, float& fH, float& fS, float& fV);
+        virtual void rgbToHsv(float& fR, float& fG, float fB, float& fH, float& fS, float& fV);
         virtual void importJSON(cocos2d::CCObject* sender);
         virtual void checkAlert(cocos2d::CCObject* sender);
         virtual void convert(cocos2d::CCObject* sender);
