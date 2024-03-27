@@ -5,7 +5,7 @@
 ### Using [Geometrize Web Demo](https://www.samcodes.co.uk/project/geometrize-haxe-web/)
 
 1. First go to [Geometrize Demo Website](https://www.samcodes.co.uk/project/geometrize-haxe-web/)
-2. Set those settings. Don't forget to select **only** circles!
+2. You can set your desired settings but shapes are restricted only for this.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/1.png)
 
@@ -32,13 +32,9 @@
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/12.png)
 
-4. **IMPORTANT!!!** Select **ONLY** circles.
+4. **IMPORTANT!!!** Shapes are restricted to circles, ellipses and rotated ellipses. Other settings you can edit as you want.
 
 ![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/13.png)
-
-5. Also set shape opacity to 255.
-
-![](https://github.com/ShineUA/geometrize2gd-mod-geode/blob/main/screenshots/14.png)
 
 6. Click "Start" button.
 
