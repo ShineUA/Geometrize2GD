@@ -1,5 +1,7 @@
 # Tutorial to use this mod
 
+### Valid from update v1.2.0
+
 ## Converting our image to **.json** file.
 
 ### Using [Geometrize Web Demo](https://www.samcodes.co.uk/project/geometrize-haxe-web/)
