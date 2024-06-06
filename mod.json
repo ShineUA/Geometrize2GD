@@ -1,8 +1,8 @@
 {
-	"geode": "2.0.0",
+	"geode": "3.0.0-alpha.1",
 	"gd": {
-		"win": "2.204",
-		"android": "2.205"
+		"win": "2.206",
+		"android": "2.206"
 	},
 	"version": "v1.2.0",
 	"id": "shineua.geometrize2gd",
