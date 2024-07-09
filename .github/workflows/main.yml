@@ -15,6 +15,9 @@ jobs:
         - name: Windows
           os: windows-latest
 
+        #- name: macOS
+          #os: macos-latest
+
         - name: Android32
           os: ubuntu-latest
           target: Android32
@@ -32,9 +35,11 @@ jobs:
       - name: Build the mod
         uses: geode-sdk/build-geode-mod@main
         with:
+          #bindings: ShineUA/bindings
           sdk: nightly
           combine: true
           export-pdb: true
+          build-config: RelWithDebInfo
           target: ${{ matrix.config.target }}
 
   package:
