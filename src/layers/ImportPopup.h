@@ -31,6 +31,7 @@ class ImportPopup : public geode::Popup<cocos2d::CCArray*> {
         GameObject* m_centerObj;
         nlohmann::json m_jsonSets;
         std::stringstream m_objsString;
+        EventListener<Task<Result<std::filesystem::path>>> m_pickListener;
         float m_drawScale = 1;
         virtual bool setup(cocos2d::CCArray* selected_obj) override;
         virtual void rgbToHsv(float& fR, float& fG, float fB, float& fH, float& fS, float& fV);
