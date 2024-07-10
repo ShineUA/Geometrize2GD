@@ -173,11 +173,6 @@ void ImportPopup::importJSON(CCObject* sender) {
                 unsigned char* buffer = CCFileUtils::sharedFileUtils()->getFileData(path.string().c_str(), "rb", &fileSize);
                 try {
                     std::string data = std::string(reinterpret_cast<char*>(buffer), fileSize);
-                    return FLAlertLayer::create(
-                        "Test",
-                        data.c_str(),
-                        "ok"
-                    )->show();
                     std::string error;
                     std::optional<matjson::Value> optValue = matjson::parse(data, error);
                     if (!optValue.has_value()) {
