@@ -182,13 +182,12 @@ void ImportPopup::importJSON(CCObject* sender) {
                             "OK"
                         )->show();
                     }
-                    matjson::Value expandedValue = optValue.value();
-                    if (expandedValue.is_array()) 
+                    this->m_jsonSets = optValue.value();
+                    if (this->m_jsonSets.is_array()) 
                         this->m_isWeb = true;
-                    else if (expandedValue.is_object()) 
+                    else if (this->m_jsonSets.is_object()) 
                         this->m_isWeb = false;
 
-                    this->m_jsonSets = expandedValue;
                     //this->m_jsonSets = nlohmann::json::parse(data);
                     this->m_buttonMenu->getChildByID("import-btn")->setVisible(false);
                     this->m_buttonMenu->getChildByID("change-btn")->setVisible(true);
