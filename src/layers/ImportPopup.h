@@ -1,9 +1,10 @@
 #include <Geode/Bindings.hpp>
+#include <Geode/ui/TextInput.hpp>
+#include <matjson.hpp>
 #include <string>
 #include <cstring>
 #include <fstream>
 #include <sstream>
-#include <nlohmann/json.hpp>
 #include <cstdlib>
 #include <cmath>
 #include <filesystem>
@@ -28,15 +29,18 @@ class ImportPopup : public geode::Popup<cocos2d::CCArray*> {
             16// ,
             // 2
         };
+        int m_objsCount;
         GameObject* m_centerObj;
-        nlohmann::json m_jsonSets;
+        bool m_isWeb;
+        matjson::Value m_jsonSets;
         std::stringstream m_objsString;
+        EventListener<Task<Result<std::filesystem::path>>> m_pickListener;
         float m_drawScale = 1;
         virtual bool setup(cocos2d::CCArray* selected_obj) override;
         virtual void rgbToHsv(float& fR, float& fG, float fB, float& fH, float& fS, float& fV);
         virtual void importJSON(cocos2d::CCObject* sender);
         virtual void checkAlert(cocos2d::CCObject* sender);
-        virtual void convert(cocos2d::CCObject* sender);
+        virtual void convert();
     public:
         static ImportPopup* create(cocos2d::CCArray* selected_obj);
 };

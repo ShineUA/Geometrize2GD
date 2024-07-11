@@ -1,3 +1,8 @@
+# v1.2.1
+
+- Ported to Geode 3
+- Switched to matjson
+
 # v1.2.0
 
 - Quality of life changes.

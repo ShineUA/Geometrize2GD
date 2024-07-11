@@ -21,7 +21,6 @@ class $modify(MyEditorUI, EditorUI) {
 		m_editButtonBar->m_buttonArray->addObject(btn);
 		auto rows = GameManager::sharedState()->getIntGameVariable("0049");
 		auto cols = GameManager::sharedState()->getIntGameVariable("0050");
-		// TODO: replace with reloadItemsInNormalSize
 		m_editButtonBar->reloadItems(rows, cols);
 		
 	}
