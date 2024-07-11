@@ -1,3 +1,7 @@
+# v1.2.2
+
+- Scale input fix.
+
 # v1.2.1
 
 - Ported to Geode 3

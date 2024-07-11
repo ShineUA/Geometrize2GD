@@ -105,7 +105,7 @@ bool ImportPopup::setup(CCArray* selected_obj) {
     convert_btn->setID("convert-btn");
 
     auto draw_scale_input = TextInput::create(50.f, "Float", "bigFont.fnt");
-    draw_scale_input->setCommonFilter(CommonFilter::Int);
+    draw_scale_input->setCommonFilter(CommonFilter::Float);
     draw_scale_input->setMaxCharCount(5);
     draw_scale_input->setString("1");
     draw_scale_input->setID("draw-input");
