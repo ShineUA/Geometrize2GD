@@ -1,6 +1,4 @@
 #include "ImportPopup.h"
-#include "Geode/binding/FLAlertLayer.hpp"
-#include <fmt/format.h>
 
 std::set<short> getGroupIDs(GameObject* obj) {
     std::set<short> res;
@@ -45,7 +43,7 @@ int nextFree(int offset)
 
 ImportPopup* ImportPopup::create(CCArray* selected_obj) {
     ImportPopup* ret = new ImportPopup();
-    if (ret && ret->init(385.f, 245.f, selected_obj)) {
+    if (ret && ret->initAnchored(385.f, 245.f, selected_obj)) {
         ret->autorelease();
     } else {
         delete ret;
@@ -56,29 +54,29 @@ ImportPopup* ImportPopup::create(CCArray* selected_obj) {
 
 bool ImportPopup::setup(CCArray* selected_obj) {
     this->m_centerObj = CCArrayExt<GameObject*>(selected_obj)[0];
-    auto winSize = CCDirector::get()->getWinSize();
+    auto popupSize = CCSize(385.f, 245.f);
 
     auto label_count = CCLabelBMFont::create("Objects: 0", "bigFont.fnt");
-    label_count->setPosition({winSize.width / 2, winSize.height / 2 - 65.f});
+    label_count->setPosition({popupSize.width / 2, popupSize.height / 2 - 65.f});
     label_count->setVisible(false);
     label_count->setID("count-label");
     label_count->setScale(0.4);
 
     auto draw_label = CCLabelBMFont::create("Scale:", "bigFont.fnt");
-    draw_label->setPosition({winSize.width / 2 + 65.f, winSize.height / 2 + 15.f});
+    draw_label->setPosition({popupSize.width / 2 + 65.f, popupSize.height / 2 + 15.f});
     draw_label->setVisible(false);
     draw_label->setID("draw-scale-label");
     draw_label->setScale(0.5);
 
     auto zlayer_label = CCLabelBMFont::create("Z-Layer\nOffset:", "bigFont.fnt");
-    zlayer_label->setPosition({winSize.width / 2 - 65.f, winSize.height / 2 + 15.f});
+    zlayer_label->setPosition({popupSize.width / 2 - 65.f, popupSize.height / 2 + 15.f});
     zlayer_label->setVisible(false);
     zlayer_label->setID("zlayer-label");
     zlayer_label->setScale(0.325);
 
     auto selectedFileLabel = CCLabelBMFont::create("", "bigFont.fnt");
     selectedFileLabel->setColor({0,255,0});
-    selectedFileLabel->setPosition(winSize.width / 2, winSize.height / 2 + 60.f);
+    selectedFileLabel->setPosition(popupSize.width / 2, popupSize.height / 2 + 60.f);
     selectedFileLabel->setScale(0.45);
     selectedFileLabel->setID("file-label");
     selectedFileLabel->setVisible(false);
@@ -88,38 +86,43 @@ bool ImportPopup::setup(CCArray* selected_obj) {
         import_json_btn_spr, this, menu_selector(ImportPopup::importJSON)
     );
     import_json_btn->setID("import-btn");
+    import_json_btn->setPosition(import_json_btn->getPosition() + popupSize / 2);
 
     auto change_json_btn_spr = ButtonSprite::create("Change File");
     auto change_json_btn = CCMenuItemSpriteExtra::create(
         change_json_btn_spr, this, menu_selector(ImportPopup::importJSON)
     );
     change_json_btn->setVisible(false);
-    change_json_btn->setPosition({0.f, 90.f});
+    change_json_btn->setPosition({popupSize.width / 2, popupSize.height / 2 + 90.f});
     change_json_btn->setID("change-btn");
 
     auto convert_btn_spr =  ButtonSprite::create("Create");
     auto convert_btn = CCMenuItemSpriteExtra::create(
         convert_btn_spr, this, menu_selector(ImportPopup::checkAlert)
     );
-    convert_btn->setPosition({0.f, -95.f});
+    convert_btn->setPosition({popupSize.width / 2, popupSize.height / 2 - 95.f});
     convert_btn->setVisible(false);
     convert_btn->setID("convert-btn");
 
-    auto draw_scale_input = InputNode::create(50.f, "Float", "bigFont.fnt", "0123456789.", 5);
+    auto draw_scale_input = TextInput::create(50.f, "Float", "bigFont.fnt");
+    draw_scale_input->setCommonFilter(CommonFilter::Int);
+    draw_scale_input->setMaxCharCount(5);
     draw_scale_input->setString("1");
     draw_scale_input->setID("draw-input");
-    draw_scale_input->setPosition({65.f, -15.f});
+    draw_scale_input->setPosition({popupSize.width / 2 + 65.f,popupSize.height / 2 - 15.f});
     draw_scale_input->setVisible(false);
-    draw_scale_input->getInput()->setLabelPlaceholderScale(0.5);
-    draw_scale_input->getInput()->setMaxLabelScale(0.6);
+    draw_scale_input->getInputNode()->setLabelPlaceholderScale(0.5);
+    draw_scale_input->getInputNode()->setMaxLabelScale(0.6);
 
-    auto z_layeroff_input = InputNode::create(50.f, "Int", "bigFont.fnt", "0123456789", 5);
+    auto z_layeroff_input = TextInput::create(50.f, "Int", "bigFont.fnt");
+    z_layeroff_input->setCommonFilter(CommonFilter::Int);
+    z_layeroff_input->setMaxCharCount(5);
     z_layeroff_input->setString("0");
     z_layeroff_input->setID("zlayer-input");
-    z_layeroff_input->setPosition({-65.f, -15.f});
+    z_layeroff_input->setPosition({popupSize.width / 2 - 65.f, popupSize.height / 2 - 15.f});
     z_layeroff_input->setVisible(false);
-    z_layeroff_input->getInput()->setLabelPlaceholderScale(0.6);
-    z_layeroff_input->getInput()->setMaxLabelScale(0.6);
+    z_layeroff_input->getInputNode()->setLabelPlaceholderScale(0.6);
+    z_layeroff_input->getInputNode()->setMaxLabelScale(0.6);
     
     this->m_mainLayer->addChild(selectedFileLabel);
     this->m_mainLayer->addChild(label_count);
@@ -168,7 +171,6 @@ void ImportPopup::importJSON(CCObject* sender) {
             }
             auto path = result->unwrap();
             if (path.string().ends_with(".json")) {
-                //this->m_jsonSets.clear();
                 unsigned long fileSize = 0;
                 unsigned char* buffer = CCFileUtils::sharedFileUtils()->getFileData(path.string().c_str(), "rb", &fileSize);
                 try {
@@ -216,7 +218,6 @@ void ImportPopup::importJSON(CCObject* sender) {
                     static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("file-label"))->setString(fmt::format("File: {}", event->getValue()->value().filename()).c_str());
                     FLAlertLayer::create("Info", "Succesfully imported file", "OK")->show();
                 } catch(...) {
-                    //this->m_jsonSets.clear();
                     FLAlertLayer::create("Error", "<cr>File doesn't exists!</c>", "OK")->show();
                 }
             } else {
@@ -232,8 +233,8 @@ void ImportPopup::convert() {
         bool isTransparent = false;
         float transparency;
         int freeGroup = nextFree(0);
-        this->m_drawScale = std::stof(static_cast<InputNode*>(this->m_buttonMenu->getChildByID("draw-input"))->getString());
-        int z_order = std::stoi(static_cast<InputNode*>(this->m_buttonMenu->getChildByID("zlayer-input"))->getString());
+        this->m_drawScale = std::stof(static_cast<TextInput*>(this->m_buttonMenu->getChildByID("draw-input"))->getString());
+        int z_order = std::stoi(static_cast<TextInput*>(this->m_buttonMenu->getChildByID("zlayer-input"))->getString());
         if (!this->m_isWeb) {
             for (int it = 0; it < this->m_jsonSets.as_object()["shapes"].as_array().size(); it++) {
                 if(this->m_jsonSets.as_object()["shapes"].as_array().at(it).get<float, std::string>("score") > 0) {
@@ -393,7 +394,6 @@ void ImportPopup::convert() {
         }
         curr_editor_layer->m_undoObjects->addObject(UndoObject::createWithArray(obj_arr, UndoCommand::Paste));
         curr_editor_ui->selectObjects(obj_arr, true);
-        //this->m_jsonSets.clear();
         this->keyBackClicked();
         FLAlertLayer::create("Info", "Successfully converted to gd objects!", "OK")->show();
     } catch(...) {
@@ -436,12 +436,12 @@ void ImportPopup::rgbToHsv(float& fR, float& fG, float fB, float& fH, float& fS,
 void ImportPopup::checkAlert(CCObject* sender) {
     if (this->m_objsCount > 5000) {
         geode::createQuickPopup(
-            "Alert",            // title
-            "This will place more than <cy>5000 objects</c>\nAre you sure?",   // content
-            "Yes", "No",      // buttons
+            "Alert",
+            "This will place more than <cy>5000 objects</c>\nAre you sure?",
+            "Yes", "No",
             [this](auto, bool btn2) {
                 if (!btn2) {
-                    this->convert(); // say hi to mom
+                    this->convert();
                 }
             }
         );
