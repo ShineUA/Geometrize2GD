@@ -36,7 +36,7 @@ jobs:
         uses: geode-sdk/build-geode-mod@main
         with:
           #bindings: ShineUA/bindings
-          sdk: nightly
+          #sdk: nightly
           combine: true
           export-pdb: true
           build-config: RelWithDebInfo
