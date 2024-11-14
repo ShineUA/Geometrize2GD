@@ -236,7 +236,7 @@ void ImportPopup::convert() {
         if (!this->m_isWeb) {
             for (int it = 0; it < this->m_jsonSets["shapes"].asArray().unwrap().size(); it++) {
                 if(this->m_jsonSets["shapes"].asArray().unwrap().at(it)["score"].asDouble().unwrap() > 0) {
-                    if (this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() < 255 && std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), this->m_jsonSets["shapes"].asArray().unwrap().at(it)["type"].asString().unwrap()) != this->m_supportedObjsDesktop.end() && this->m_jsonSets["shapes"].asArray().unwrap().at(it) != this->m_jsonSets["shapes"].asArray().unwrap().at(0) && !isTransparent) {
+                    if (this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() < 255 && std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), this->m_jsonSets["shapes"].asArray().unwrap().at(it)["type"].asInt().unwrap()) != this->m_supportedObjsDesktop.end() && this->m_jsonSets["shapes"].asArray().unwrap().at(it) != this->m_jsonSets["shapes"].asArray().unwrap().at(0) && !isTransparent) {
                         isTransparent = true;
                         transparency = (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() / 255;
                     }
@@ -306,7 +306,7 @@ void ImportPopup::convert() {
         } else {
             for (int it = 0; it < this->m_jsonSets.asArray().unwrap().size(); it++) {
                 if(this->m_jsonSets.asArray().unwrap().at(it)["score"].asDouble().unwrap() > 0) {
-                    if (this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() < 255 && std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), this->m_jsonSets.asArray().unwrap().at(it)["type"].asString().unwrap()) != this->m_supportedObjsWeb.end() && this->m_jsonSets.asArray().unwrap().at(it) != this->m_jsonSets.asArray().unwrap().at(0) && !isTransparent) {
+                    if (this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() < 255 && std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), this->m_jsonSets.asArray().unwrap().at(it)["type"].asIntg().unwrap()) != this->m_supportedObjsWeb.end() && this->m_jsonSets.asArray().unwrap().at(it) != this->m_jsonSets.asArray().unwrap().at(0) && !isTransparent) {
                         isTransparent = true;
                         transparency = (float)this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() / 255;
                     }
