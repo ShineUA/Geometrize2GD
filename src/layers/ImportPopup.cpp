@@ -201,13 +201,13 @@ void ImportPopup::importJSON(CCObject* sender) {
                     this->m_objsCount = 0;
                     if (!this->m_isWeb) {
                         for(int it = 0; it < this->m_jsonSets["shapes"].asArray().unwrap().size(); it++) {
-                            if(std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), this->m_jsonSets["shapes"].asArray().unwrap().at(it)["type"].asString().unwrap()) != this->m_supportedObjsDesktop.end() && this->m_jsonSets["shapes"].asArray().unwrap().at(it)["score"].asDouble().unwrap() > 0) {
+                            if(std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), this->m_jsonSets["shapes"].asArray().unwrap().at(it)["type"].asInt().unwrap()) != this->m_supportedObjsDesktop.end() && this->m_jsonSets["shapes"].asArray().unwrap().at(it)["score"].asDouble().unwrap() > 0) {
                                 this->m_objsCount++;
                             }
                         }
                     } else {
                         for(int it = 0; it < this->m_jsonSets.asArray().unwrap().size(); it++) {
-                            if(std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), this->m_jsonSets.asArray().unwrap().at(it)["type"].asString().unwrap()) != this->m_supportedObjsWeb.end() && this->m_jsonSets.asArray().unwrap().at(it)["score"].asDouble().unwrap() > 0) {
+                            if(std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), this->m_jsonSets.asArray().unwrap().at(it)["type"].asInt().unwrap()) != this->m_supportedObjsWeb.end() && this->m_jsonSets.asArray().unwrap().at(it)["score"].asDouble().unwrap() > 0) {
                                 this->m_objsCount++;
                             }
                         }
@@ -226,7 +226,7 @@ void ImportPopup::importJSON(CCObject* sender) {
     m_pickListener.setFilter(file::pick(file::PickMode::OpenFile, options));
 }
 
-void ImportPopup::convert() {
+void ImportPopup::parse() {
     try {
         bool isTransparent = false;
         float transparency;
@@ -439,12 +439,12 @@ void ImportPopup::checkAlert(CCObject* sender) {
             "Yes", "No",
             [this](auto, bool btn2) {
                 if (!btn2) {
-                    this->convert();
+                    this->parse();
                 }
             }
         );
     } else {
-        this->convert();
+        this->parse();
     }
 }
 

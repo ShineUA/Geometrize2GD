@@ -40,7 +40,7 @@ class ImportPopup : public geode::Popup<cocos2d::CCArray*> {
         virtual void rgbToHsv(float& fR, float& fG, float fB, float& fH, float& fS, float& fV);
         virtual void importJSON(cocos2d::CCObject* sender);
         virtual void checkAlert(cocos2d::CCObject* sender);
-        virtual void convert();
+        virtual void parse();
     public:
         static ImportPopup* create(cocos2d::CCArray* selected_obj);
 };

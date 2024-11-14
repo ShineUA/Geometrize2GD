@@ -12,7 +12,6 @@ class $modify(MyEditorUI, EditorUI) {
 		} else {
 			FLAlertLayer::create("Info", "You have to choose <cg>exactly one</c> object to be the down-left corner of the image!", "OK")->show();
 		}
-		
 	}
 
 	void createMoveMenu() {
@@ -22,6 +21,5 @@ class $modify(MyEditorUI, EditorUI) {
 		auto rows = GameManager::sharedState()->getIntGameVariable("0049");
 		auto cols = GameManager::sharedState()->getIntGameVariable("0050");
 		m_editButtonBar->reloadItems(rows, cols);
-		
 	}
 };
