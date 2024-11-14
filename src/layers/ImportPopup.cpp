@@ -162,12 +162,11 @@ void ImportPopup::importJSON(CCObject* sender) {
         }
         if (auto result = event->getValue()) {
             if(result->isErr()) {
-                FLAlertLayer::create(
+                return FLAlertLayer::create(
                     "Error",
                     fmt::format("<cr>Failed</c> to open file. Error: {}", result->err()),
                     "Ok"
                 )->show();
-                return;
             }
             auto path = result->unwrap();
             if (path.string().ends_with(".json")) {
@@ -175,19 +174,18 @@ void ImportPopup::importJSON(CCObject* sender) {
                 unsigned char* buffer = CCFileUtils::sharedFileUtils()->getFileData(path.string().c_str(), "rb", &fileSize);
                 try {
                     std::string data = std::string(reinterpret_cast<char*>(buffer), fileSize);
-                    std::string error;
-                    std::optional<matjson::Value> optValue = matjson::parse(data, error);
-                    if (!optValue.has_value()) {
+                    auto optValue = matjson::parse(data);
+                    if (optValue.isErr()) {
                         return FLAlertLayer::create(
                             "Error",
                             "<cr>Failed</c> to read <cg>JSON</c>.",
                             "OK"
                         )->show();
                     }
-                    this->m_jsonSets = optValue.value();
-                    if (this->m_jsonSets.is_array()) 
+                    this->m_jsonSets = optValue.unwrap();
+                    if (this->m_jsonSets.isArray())
                         this->m_isWeb = true;
-                    else if (this->m_jsonSets.is_object()) 
+                    else if (this->m_jsonSets.isObject())
                         this->m_isWeb = false;
 
                     //this->m_jsonSets = nlohmann::json::parse(data);
@@ -202,20 +200,20 @@ void ImportPopup::importJSON(CCObject* sender) {
                     this->m_buttonMenu->getChildByID("convert-btn")->setVisible(true);
                     this->m_objsCount = 0;
                     if (!this->m_isWeb) {
-                        for(int it = 0; it < this->m_jsonSets.as_object()["shapes"].as_array().size(); it++) {
-                            if(std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), this->m_jsonSets.as_object()["shapes"].as_array().at(it).get<int, std::string>("type")) != this->m_supportedObjsDesktop.end() && this->m_jsonSets.as_object()["shapes"].as_array().at(it).get<float, std::string>("score") > 0) {
+                        for(int it = 0; it < this->m_jsonSets["shapes"].asArray().unwrap().size(); it++) {
+                            if(std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), this->m_jsonSets["shapes"].asArray().unwrap().at(it)["type"].asString().unwrap()) != this->m_supportedObjsDesktop.end() && this->m_jsonSets["shapes"].asArray().unwrap().at(it)["score"].asDouble().unwrap() > 0) {
                                 this->m_objsCount++;
                             }
                         }
                     } else {
-                        for(int it = 0; it < this->m_jsonSets.as_array().size(); it++) {
-                            if(std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), this->m_jsonSets.as_array().at(it).get<int, std::string>("type")) != this->m_supportedObjsWeb.end() && this->m_jsonSets.as_array().at(it).get<float, std::string>("score") > 0) {
+                        for(int it = 0; it < this->m_jsonSets.asArray().unwrap().size(); it++) {
+                            if(std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), this->m_jsonSets.asArray().unwrap().at(it)["type"].asString().unwrap()) != this->m_supportedObjsWeb.end() && this->m_jsonSets.asArray().unwrap().at(it)["score"].asDouble().unwrap() > 0) {
                                 this->m_objsCount++;
                             }
                         }
                     }
                     static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", this->m_objsCount).c_str());
-                    static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("file-label"))->setString(fmt::format("File: {}", event->getValue()->value().filename()).c_str());
+                    static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("file-label"))->setString(fmt::format("File: {}", event->getValue()->unwrap().filename()).c_str());
                     FLAlertLayer::create("Info", "Succesfully imported file", "OK")->show();
                 } catch(...) {
                     FLAlertLayer::create("Error", "<cr>File doesn't exists!</c>", "OK")->show();
@@ -236,24 +234,24 @@ void ImportPopup::convert() {
         this->m_drawScale = std::stof(static_cast<TextInput*>(this->m_buttonMenu->getChildByID("draw-input"))->getString());
         int z_order = std::stoi(static_cast<TextInput*>(this->m_buttonMenu->getChildByID("zlayer-input"))->getString());
         if (!this->m_isWeb) {
-            for (int it = 0; it < this->m_jsonSets.as_object()["shapes"].as_array().size(); it++) {
-                if(this->m_jsonSets.as_object()["shapes"].as_array().at(it).get<float, std::string>("score") > 0) {
-                    if (this->m_jsonSets.as_object()["shapes"].as_array().at(it)["color"].as_array().at(3).as_int() < 255 && std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), this->m_jsonSets.as_object()["shapes"].as_array().at(it).get<int, std::string>("type")) != this->m_supportedObjsDesktop.end() && this->m_jsonSets.as_object()["shapes"].as_array().at(it) != this->m_jsonSets.as_object()["shapes"].as_array().at(0) && !isTransparent) {
+            for (int it = 0; it < this->m_jsonSets["shapes"].asArray().unwrap().size(); it++) {
+                if(this->m_jsonSets["shapes"].asArray().unwrap().at(it)["score"].asDouble().unwrap() > 0) {
+                    if (this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() < 255 && std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), this->m_jsonSets["shapes"].asArray().unwrap().at(it)["type"].asString().unwrap()) != this->m_supportedObjsDesktop.end() && this->m_jsonSets["shapes"].asArray().unwrap().at(it) != this->m_jsonSets["shapes"].asArray().unwrap().at(0) && !isTransparent) {
                         isTransparent = true;
-                        transparency = (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["color"].as_array().at(3).as_int() / 255;
+                        transparency = (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() / 255;
                     }
-                    if (this->m_jsonSets.as_object()["shapes"].as_array().at(it).get<int, std::string>("type") == this->m_supportedObjsDesktop[0]) {
+                    if (this->m_jsonSets["shapes"].asArray().unwrap().at(it)["type"].asInt().unwrap() == this->m_supportedObjsDesktop[0]) {
                         this->m_objsString << "1," << this->m_circle_id;
-                        this->m_objsString << ",2," << (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["data"].as_array().at(0).as_double() * this->m_drawScale + this->m_centerObj->getPositionX();
-                        this->m_objsString << ",3," << (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["data"].as_array().at(1).as_double() * this->m_drawScale + this->m_centerObj->getPositionY();
-                        this->m_objsString << ",32," << (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["data"].as_array().at(2).as_double() * this->m_drawScale / 4;
+                        this->m_objsString << ",2," << (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["data"].asArray().unwrap().at(0).asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
+                        this->m_objsString << ",3," << (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["data"].asArray().unwrap().at(1).asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
+                        this->m_objsString << ",32," << (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["data"].asArray().unwrap().at(2).asDouble().unwrap() * this->m_drawScale / 4;
                         this->m_objsString << ",41," << "1";
                         this->m_objsString << ",42," << "1";
                         this->m_objsString << ",21,1010,22,1010";
                         float h, s, v;
-                        auto r = (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["color"].as_array().at(0).as_double() / 255.f;
-                        auto g = (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["color"].as_array().at(1).as_double() / 255.f;
-                        auto b = (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["color"].as_array().at(2).as_double() / 255.f;
+                        auto r = (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(0).asDouble().unwrap() / 255.f;
+                        auto g = (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(1).asDouble().unwrap() / 255.f;
+                        auto b = (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(2).asDouble().unwrap() / 255.f;
                         this->rgbToHsv(r, g, b, h, s, v);
                         this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
                         this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
@@ -261,19 +259,19 @@ void ImportPopup::convert() {
                         this->m_objsString << ",57," << freeGroup;
                         this->m_objsString << ";";
                         z_order++;
-                    } else if (this->m_jsonSets.as_object()["shapes"].as_array().at(it).get<int, std::string>("type") == this->m_supportedObjsDesktop[1]) {
+                    } else if (this->m_jsonSets["shapes"].asArray().unwrap().at(it)["type"].asInt().unwrap() == this->m_supportedObjsDesktop[1]) {
                         this->m_objsString << "1," << this->m_circle_id;
-                        this->m_objsString << ",2," << (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["data"].as_array().at(0).as_double() * this->m_drawScale + this->m_centerObj->getPositionX();
-                        this->m_objsString << ",3," << (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["data"].as_array().at(1).as_double() * this->m_drawScale + this->m_centerObj->getPositionY();
-                        this->m_objsString << ",128," << (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["data"].as_array().at(2).as_double() * this->m_drawScale / 4;
-                        this->m_objsString << ",129," << (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["data"].as_array().at(3).as_double() * this->m_drawScale / 4;
+                        this->m_objsString << ",2," << (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["data"].asArray().unwrap().at(0).asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
+                        this->m_objsString << ",3," << (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["data"].asArray().unwrap().at(1).asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
+                        this->m_objsString << ",128," << (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["data"].asArray().unwrap().at(2).asDouble().unwrap() * this->m_drawScale / 4;
+                        this->m_objsString << ",129," << (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["data"].asArray().unwrap().at(3).asDouble().unwrap() * this->m_drawScale / 4;
                         this->m_objsString << ",41," << "1";
                         this->m_objsString << ",42," << "1";
                         this->m_objsString << ",21,1010,22,1010";
                         float h, s, v;
-                        auto r = (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["color"].as_array().at(0).as_double() / 255.f;
-                        auto g = (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["color"].as_array().at(1).as_double() / 255.f;
-                        auto b = (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["color"].as_array().at(2).as_double() / 255.f;
+                        auto r = (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(0).asDouble().unwrap() / 255.f;
+                        auto g = (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(1).asDouble().unwrap() / 255.f;
+                        auto b = (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(2).asDouble().unwrap() / 255.f;
                         this->rgbToHsv(r, g, b, h, s, v);
                         this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
                         this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
@@ -281,20 +279,20 @@ void ImportPopup::convert() {
                         this->m_objsString << ",57," << freeGroup;
                         this->m_objsString << ";";
                         z_order++;
-                    } else if (this->m_jsonSets.as_object()["shapes"].as_array().at(it).get<int, std::string>("type") == this->m_supportedObjsDesktop[2]) {
+                    } else if (this->m_jsonSets["shapes"].asArray().unwrap().at(it)["type"].asInt().unwrap() == this->m_supportedObjsDesktop[2]) {
                         this->m_objsString << "1," << this->m_circle_id;
-                        this->m_objsString << ",2," << (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["data"].as_array().at(0).as_double() * this->m_drawScale + this->m_centerObj->getPositionX();
-                        this->m_objsString << ",3," << (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["data"].as_array().at(1).as_double() * this->m_drawScale + this->m_centerObj->getPositionY();
-                        this->m_objsString << ",128," << (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["data"].as_array().at(2).as_double() * this->m_drawScale / 4;
-                        this->m_objsString << ",129," << (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["data"].as_array().at(3).as_double() * this->m_drawScale / 4;
-                        this->m_objsString << ",6," << "-" << (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["data"].as_array().at(4).as_double();
+                        this->m_objsString << ",2," << (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["data"].asArray().unwrap().at(0).asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
+                        this->m_objsString << ",3," << (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["data"].asArray().unwrap().at(1).asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
+                        this->m_objsString << ",128," << (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["data"].asArray().unwrap().at(2).asDouble().unwrap() * this->m_drawScale / 4;
+                        this->m_objsString << ",129," << (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["data"].asArray().unwrap().at(3).asDouble().unwrap() * this->m_drawScale / 4;
+                        this->m_objsString << ",6," << "-" << (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["data"].asArray().unwrap().at(4).asDouble().unwrap();
                         this->m_objsString << ",41," << "1";
                         this->m_objsString << ",42," << "1";
                         this->m_objsString << ",21,1010,22,1010";
                         float h, s, v;
-                        auto r = (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["color"].as_array().at(0).as_double() / 255.f;
-                        auto g = (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["color"].as_array().at(1).as_double() / 255.f;
-                        auto b = (float)this->m_jsonSets.as_object()["shapes"].as_array().at(it)["color"].as_array().at(2).as_double() / 255.f;
+                        auto r = (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(0).asDouble().unwrap() / 255.f;
+                        auto g = (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(1).asDouble().unwrap() / 255.f;
+                        auto b = (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(2).asDouble().unwrap() / 255.f;
                         this->rgbToHsv(r, g, b, h, s, v);
                         this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
                         this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
@@ -306,24 +304,24 @@ void ImportPopup::convert() {
                 }
             }
         } else {
-            for (int it = 0; it < this->m_jsonSets.as_array().size(); it++) {
-                if(this->m_jsonSets.as_array().at(it).get<float, std::string>("score") > 0) {
-                    if (this->m_jsonSets.as_array().at(it)["color"].as_array().at(3).as_int() < 255 && std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), this->m_jsonSets.as_array().at(it).get<int, std::string>("type")) != this->m_supportedObjsWeb.end() && this->m_jsonSets.as_array().at(it) != this->m_jsonSets.as_array().at(0) && !isTransparent) {
+            for (int it = 0; it < this->m_jsonSets.asArray().unwrap().size(); it++) {
+                if(this->m_jsonSets.asArray().unwrap().at(it)["score"].asDouble().unwrap() > 0) {
+                    if (this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() < 255 && std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), this->m_jsonSets.asArray().unwrap().at(it)["type"].asString().unwrap()) != this->m_supportedObjsWeb.end() && this->m_jsonSets.asArray().unwrap().at(it) != this->m_jsonSets.asArray().unwrap().at(0) && !isTransparent) {
                         isTransparent = true;
-                        transparency = (float)this->m_jsonSets.as_array().at(it)["color"].as_array().at(3).as_int() / 255;
+                        transparency = (float)this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() / 255;
                     }
-                    if (this->m_jsonSets.as_array().at(it).get<int, std::string>("type") == this->m_supportedObjsWeb[0]) {
+                    if (this->m_jsonSets.asArray().unwrap().at(it)["type"].asInt().unwrap() == this->m_supportedObjsWeb[0]) {
                         this->m_objsString << "1," << this->m_circle_id;
-                        this->m_objsString << ",2," << (float)this->m_jsonSets.as_array().at(it)["data"].as_array().at(0).as_double() * this->m_drawScale + this->m_centerObj->getPositionX();
-                        this->m_objsString << ",3," << (float)this->m_jsonSets.as_array().at(it)["data"].as_array().at(1).as_double() * this->m_drawScale + this->m_centerObj->getPositionY();
-                        this->m_objsString << ",32," << (float)this->m_jsonSets.as_array().at(it)["data"].as_array().at(2).as_double() * this->m_drawScale / 4;
+                        this->m_objsString << ",2," << (float)this->m_jsonSets.asArray().unwrap().at(it)["data"].asArray().unwrap().at(0).asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
+                        this->m_objsString << ",3," << (float)this->m_jsonSets.asArray().unwrap().at(it)["data"].asArray().unwrap().at(1).asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
+                        this->m_objsString << ",32," << (float)this->m_jsonSets.asArray().unwrap().at(it)["data"].asArray().unwrap().at(2).asDouble().unwrap() * this->m_drawScale / 4;
                         this->m_objsString << ",41," << "1";
                         this->m_objsString << ",42," << "1";
                         this->m_objsString << ",21,1010,22,1010";
                         float h, s, v;
-                        auto r = (float)this->m_jsonSets.as_array().at(it)["color"].as_array().at(0).as_double() / 255.f;
-                        auto g = (float)this->m_jsonSets.as_array().at(it)["color"].as_array().at(1).as_double() / 255.f;
-                        auto b = (float)this->m_jsonSets.as_array().at(it)["color"].as_array().at(2).as_double() / 255.f;
+                        auto r = (float)this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(0).asDouble().unwrap() / 255.f;
+                        auto g = (float)this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(1).asDouble().unwrap() / 255.f;
+                        auto b = (float)this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(2).asDouble().unwrap() / 255.f;
                         this->rgbToHsv(r, g, b, h, s, v);
                         this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
                         this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
@@ -331,19 +329,19 @@ void ImportPopup::convert() {
                         this->m_objsString << ",57," << freeGroup;
                         this->m_objsString << ";";
                         z_order++;
-                    } else if (this->m_jsonSets.as_array().at(it).get<int, std::string>("type") == this->m_supportedObjsWeb[1]) {
+                    } else if (this->m_jsonSets.asArray().unwrap().at(it)["type"].asInt().unwrap() == this->m_supportedObjsWeb[1]) {
                         this->m_objsString << "1," << this->m_circle_id;
-                        this->m_objsString << ",2," << (float)this->m_jsonSets.as_array().at(it)["data"].as_array().at(0).as_double() * this->m_drawScale + this->m_centerObj->getPositionX();
-                        this->m_objsString << ",3," << (float)this->m_jsonSets.as_array().at(it)["data"].as_array().at(1).as_double() * this->m_drawScale + this->m_centerObj->getPositionY();
-                        this->m_objsString << ",128," << (float)this->m_jsonSets.as_array().at(it)["data"].as_array().at(2).as_double() * this->m_drawScale / 4;
-                        this->m_objsString << ",129," << (float)this->m_jsonSets.as_array().at(it)["data"].as_array().at(3).as_double() * this->m_drawScale / 4;
+                        this->m_objsString << ",2," << (float)this->m_jsonSets.asArray().unwrap().at(it)["data"].asArray().unwrap().at(0).asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
+                        this->m_objsString << ",3," << (float)this->m_jsonSets.asArray().unwrap().at(it)["data"].asArray().unwrap().at(1).asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
+                        this->m_objsString << ",128," << (float)this->m_jsonSets.asArray().unwrap().at(it)["data"].asArray().unwrap().at(2).asDouble().unwrap() * this->m_drawScale / 4;
+                        this->m_objsString << ",129," << (float)this->m_jsonSets.asArray().unwrap().at(it)["data"].asArray().unwrap().at(3).asDouble().unwrap() * this->m_drawScale / 4;
                         this->m_objsString << ",41," << "1";
                         this->m_objsString << ",42," << "1";
                         this->m_objsString << ",21,1010,22,1010";
                         float h, s, v;
-                        auto r = (float)this->m_jsonSets.as_array().at(it)["color"].as_array().at(0).as_double() / 255.f;
-                        auto g = (float)this->m_jsonSets.as_array().at(it)["color"].as_array().at(1).as_double() / 255.f;
-                        auto b = (float)this->m_jsonSets.as_array().at(it)["color"].as_array().at(2).as_double() / 255.f;
+                        auto r = (float)this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(0).asDouble().unwrap() / 255.f;
+                        auto g = (float)this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(1).asDouble().unwrap() / 255.f;
+                        auto b = (float)this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(2).asDouble().unwrap() / 255.f;
                         this->rgbToHsv(r, g, b, h, s, v);
                         this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
                         this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
@@ -351,20 +349,20 @@ void ImportPopup::convert() {
                         this->m_objsString << ",57," << freeGroup;
                         this->m_objsString << ";";
                         z_order++;
-                    } else if (this->m_jsonSets.as_array().at(it).get<int, std::string>("type") == this->m_supportedObjsWeb[2]) {
+                    } else if (this->m_jsonSets.asArray().unwrap().at(it)["type"].asInt().unwrap() == this->m_supportedObjsWeb[2]) {
                         this->m_objsString << "1," << this->m_circle_id;
-                        this->m_objsString << ",2," << (float)this->m_jsonSets.as_array().at(it)["data"].as_array().at(0).as_double() * this->m_drawScale + this->m_centerObj->getPositionX();
-                        this->m_objsString << ",3," << (float)this->m_jsonSets.as_array().at(it)["data"].as_array().at(1).as_double() * this->m_drawScale + this->m_centerObj->getPositionY();
-                        this->m_objsString << ",128," << (float)this->m_jsonSets.as_array().at(it)["data"].as_array().at(2).as_double() * this->m_drawScale / 4;
-                        this->m_objsString << ",129," << (float)this->m_jsonSets.as_array().at(it)["data"].as_array().at(3).as_double() * this->m_drawScale / 4;
-                        this->m_objsString << ",6," << "-" << (float)this->m_jsonSets.as_array().at(it)["data"].as_array().at(4).as_double();
+                        this->m_objsString << ",2," << (float)this->m_jsonSets.asArray().unwrap().at(it)["data"].asArray().unwrap().at(0).asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
+                        this->m_objsString << ",3," << (float)this->m_jsonSets.asArray().unwrap().at(it)["data"].asArray().unwrap().at(1).asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
+                        this->m_objsString << ",128," << (float)this->m_jsonSets.asArray().unwrap().at(it)["data"].asArray().unwrap().at(2).asDouble().unwrap() * this->m_drawScale / 4;
+                        this->m_objsString << ",129," << (float)this->m_jsonSets.asArray().unwrap().at(it)["data"].asArray().unwrap().at(3).asDouble().unwrap() * this->m_drawScale / 4;
+                        this->m_objsString << ",6," << "-" << (float)this->m_jsonSets.asArray().unwrap().at(it)["data"].asArray().unwrap().at(4).asDouble().unwrap();
                         this->m_objsString << ",41," << "1";
                         this->m_objsString << ",42," << "1";
                         this->m_objsString << ",21,1010,22,1010";
                         float h, s, v;
-                        auto r = (float)this->m_jsonSets.as_array().at(it)["color"].as_array().at(0).as_double() / 255.f;
-                        auto g = (float)this->m_jsonSets.as_array().at(it)["color"].as_array().at(1).as_double() / 255.f;
-                        auto b = (float)this->m_jsonSets.as_array().at(it)["color"].as_array().at(2).as_double() / 255.f;
+                        auto r = (float)this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(0).asDouble().unwrap() / 255.f;
+                        auto g = (float)this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(1).asDouble().unwrap() / 255.f;
+                        auto b = (float)this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(2).asDouble().unwrap() / 255.f;
                         this->rgbToHsv(r, g, b, h, s, v);
                         this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
                         this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
