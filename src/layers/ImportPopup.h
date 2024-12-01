@@ -13,7 +13,7 @@ using namespace geode::prelude;
 
 class ImportPopup : public geode::Popup<cocos2d::CCArray*> {
     protected:
-        const int m_circle_id = 1764;
+        const int m_circle_id = 497;
         const int m_rect_id = 211;
         const std::array<int, 3> m_supportedObjsWeb = {
             5, // circle
