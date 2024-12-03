@@ -149,85 +149,83 @@ void ImportPopup::importJSON(CCObject* sender) {
 
     m_pickListener.bind([this](Task<Result<std::filesystem::path>>::Event* event) {
         if (event->isCancelled()) {
-            FLAlertLayer::create(
-                "Error",
-                "<cr>Failed</c> to open file (Task Cancelled)",
-                "Ok"
+            return Notification::create(
+                "Failed to open file (Task Cancelled)",
+                NotificationIcon::Error
             )->show();
-            return;
         }
         if (auto result = event->getValue()) {
             if(result->isErr()) {
-                return FLAlertLayer::create(
-                    "Error",
-                    fmt::format("<cr>Failed</c> to open file. Error: {}", result->err()),
-                    "Ok"
+                return Notification::create(
+                    fmt::format("Failed to open file. Error: {}", result->err()),
+                    NotificationIcon::Error
                 )->show();
             }
             auto path = result->unwrap();
             if (path.string().ends_with(".json")) {
                 unsigned long fileSize = 0;
                 unsigned char* buffer = CCFileUtils::sharedFileUtils()->getFileData(path.string().c_str(), "rb", &fileSize);
-                try {
-                    std::string data = std::string(reinterpret_cast<char*>(buffer), fileSize);
-                    auto optValue = matjson::parse(data);
-                    if (optValue.isErr()) {
-                        return FLAlertLayer::create(
-                            "Error",
-                            "<cr>Failed</c> to read <cg>JSON</c>.",
-                            "OK"
-                        )->show();
-                    }
-                    this->m_jsonSets = optValue.unwrap();
-                    if (this->m_jsonSets.isArray())
-                        this->m_isWeb = true;
-                    else if (this->m_jsonSets.isObject())
-                        this->m_isWeb = false;
-                    else return FLAlertLayer::create("Error", "<cr>Failed</c> to read <cg>JSON</c>.", "OK")->show();
-                    
-                    this->m_buttonMenu->getChildByID("import-btn")->setVisible(false);
-                    this->m_buttonMenu->getChildByID("change-btn")->setVisible(true);
-                    this->m_buttonMenu->getChildByID("draw-input")->setVisible(true);
-                    this->m_buttonMenu->getChildByID("zlayer-input")->setVisible(true);
-                    this->m_mainLayer->getChildByID("draw-scale-label")->setVisible(true);
-                    this->m_mainLayer->getChildByID("zlayer-label")->setVisible(true);
-                    this->m_mainLayer->getChildByID("count-label")->setVisible(true);
-                    this->m_mainLayer->getChildByID("file-label")->setVisible(true);
-                    this->m_buttonMenu->getChildByID("convert-btn")->setVisible(true);
-                    this->m_objsCount = 0;
-                    if (!this->m_isWeb) {
-                        if (auto val = this->m_jsonSets["shapes"].asArray(); val.isOk()) {
-                            for(int it = 0; it < val.unwrap().size(); it++) {
-                                if(auto objType = val.unwrap()[it]["type"].asInt(); objType.isOk()) {
-                                    if (std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), objType.unwrap()) != this->m_supportedObjsDesktop.end()) {
-                                        if (auto objScore = val.unwrap()[it]["score"].asDouble(); objScore.isOk() && objScore.unwrap() > 0) {
-                                            this->m_objsCount++;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        if (auto val = this->m_jsonSets.asArray(); val.isOk()) {
-                            for(int it = 0; it < val.unwrap().size(); it++) {
-                                if(auto objType = val.unwrap()[it]["type"].asInt(); objType.isOk()) {
-                                    if (std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), objType.unwrap()) != this->m_supportedObjsWeb.end()) {
-                                        if (auto objScore = val.unwrap()[it]["score"].asDouble(); objScore.isOk() && objScore.unwrap() > 0) {
-                                            this->m_objsCount++;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", this->m_objsCount).c_str());
-                    static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("file-label"))->setString(fmt::format("File: {}", event->getValue()->unwrap().filename()).c_str());
-                    FLAlertLayer::create("Info", "File is imported", "OK")->show();
-                } catch(...) {
-                    FLAlertLayer::create("Error", "<cr>File doesn't exists!</c>", "OK")->show();
+                std::string data = std::string(reinterpret_cast<char*>(buffer), fileSize);
+                auto optValue = matjson::parse(data);
+                if (optValue.isErr()) {
+                    return Notification::create(
+                        "Failed to parse JSON!",
+                        NotificationIcon::Error
+                    )->show();
                 }
+                this->m_jsonSets = optValue.unwrap();
+                if (this->m_jsonSets.isArray())
+                    this->m_isWeb = true;
+                else if (this->m_jsonSets.isObject())
+                    this->m_isWeb = false;
+                else return FLAlertLayer::create("Error", "<cr>Failed</c> to read <cg>JSON</c>.", "OK")->show();
+
+                this->m_buttonMenu->getChildByID("import-btn")->setVisible(false);
+                this->m_buttonMenu->getChildByID("change-btn")->setVisible(true);
+                this->m_buttonMenu->getChildByID("draw-input")->setVisible(true);
+                this->m_buttonMenu->getChildByID("zlayer-input")->setVisible(true);
+                this->m_mainLayer->getChildByID("draw-scale-label")->setVisible(true);
+                this->m_mainLayer->getChildByID("zlayer-label")->setVisible(true);
+                this->m_mainLayer->getChildByID("count-label")->setVisible(true);
+                this->m_mainLayer->getChildByID("file-label")->setVisible(true);
+                this->m_buttonMenu->getChildByID("convert-btn")->setVisible(true);
+                this->m_objsCount = 0;
+                if (!this->m_isWeb) {
+                    if (auto val = this->m_jsonSets["shapes"].asArray(); val.isOk()) {
+                        for(int it = 0; it < val.unwrap().size(); it++) {
+                            if(auto objType = val.unwrap()[it]["type"].asInt(); objType.isOk()) {
+                                if (std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), objType.unwrap()) != this->m_supportedObjsDesktop.end()) {
+                                    if (auto objScore = val.unwrap()[it]["score"].asDouble(); objScore.isOk() && objScore.unwrap() > 0) {
+                                        this->m_objsCount++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    if (auto val = this->m_jsonSets.asArray(); val.isOk()) {
+                        for(int it = 0; it < val.unwrap().size(); it++) {
+                            if(auto objType = val.unwrap()[it]["type"].asInt(); objType.isOk()) {
+                                if (std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), objType.unwrap()) != this->m_supportedObjsWeb.end()) {
+                                    if (auto objScore = val.unwrap()[it]["score"].asDouble(); objScore.isOk() && objScore.unwrap() > 0) {
+                                        this->m_objsCount++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", this->m_objsCount).c_str());
+                static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("file-label"))->setString(fmt::format("File: {}", event->getValue()->unwrap().filename()).c_str());
+                Notification::create(
+                    "File is imported",
+                    NotificationIcon::Success
+                )->show();
             } else {
-                FLAlertLayer::create("Error", "<cr>Wrong file format</c>\nIt must be a <cy>.json</c> file!", "OK")->show();
+                Notification::create(
+                    "Wrong file format. It must be a .json file!",
+                    NotificationIcon::Error
+                )->show();
             }
         }
     });
@@ -390,10 +388,9 @@ void ImportPopup::parse() {
         }
     }
     if (this->m_objsString.str().empty()) {
-        FLAlertLayer::create(
-            "Info",
+        Notification::create(
             "No object added.",
-            "OK"
+            NotificationIcon::Error
         )->show();
         return this->onClose(nullptr);
     }
@@ -407,8 +404,12 @@ void ImportPopup::parse() {
     }
     curr_editor_layer->m_undoObjects->addObject(UndoObject::createWithArray(obj_arr, UndoCommand::Paste));
     curr_editor_ui->selectObjects(obj_arr, true);
+    curr_editor_ui->updateButtons();
     this->keyBackClicked();
-    FLAlertLayer::create("Info", "Successfully converted to gd objects!", "OK")->show();
+    Notification::create(
+        "Successfully converted to gd objects!",
+        NotificationIcon::Success
+    )->show();
 }
 
 void ImportPopup::rgbToHsv(float& fR, float& fG, float fB, float& fH, float& fS, float& fV) {

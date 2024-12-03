@@ -1,5 +1,7 @@
 # Tutorial to use this mod
 
+### P.S: The big update I talked about gonna be a separate mod named Img2GD.
+
 ### Valid from update v1.2.0
 
 ## Converting our image to **.json** file.
