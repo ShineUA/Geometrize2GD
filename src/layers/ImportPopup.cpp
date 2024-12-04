@@ -342,21 +342,21 @@ void ImportPopup::textChanged(CCTextInputNode *p0) {
     if (p0 == this->m_drawScaleInput->getInputNode()) {
         auto num = utils::numFromString<float>(p0->getString());
         if (num.isErr()) {
-            return p0->setLabelNormalColor(ccColor3B(255,0,0));
+            return p0->setLabelNormalColor(ccc3(255,0,0));
         }
         auto numUn = num.unwrap();
         if (numUn <= 0) {
-            return p0->setLabelNormalColor(ccColor3B(255,0,0));
+            return p0->setLabelNormalColor(ccc3(255,0,0));
         }
-        p0->setLabelNormalColor(ccColor3B(255,255,255));
+        p0->setLabelNormalColor(ccc3(255,255,255));
         this->m_drawScale = numUn;
     } else if (p0 == this->m_zLayerInput->getInputNode()) {
         auto num = utils::numFromString<int>(p0->getString());
         if (num.isErr()) {
-            return p0->setLabelNormalColor(ccColor3B(255,0,0));
+            return p0->setLabelNormalColor(ccc3(255,0,0));
         }
         auto numUn = num.unwrap();
-        p0->setLabelNormalColor(ccColor3B(255,255,255));
+        p0->setLabelNormalColor(ccc3(255,255,255));
         this->m_zOrder = numUn;
     }
 }
