@@ -11,36 +11,29 @@
 
 using namespace geode::prelude;
 
-class ImportPopup : public geode::Popup<cocos2d::CCArray*> {
-    protected:
-        const int m_circle_id = 497;
-        const int m_rect_id = 211;
-        const std::array<int, 3> m_supportedObjsWeb = {
-            5, // circle
-            // 0, // rectangle
-            3, // ellipse
-            4//, // rotated ellipse
-            //1 // rotated rectangle
-        };
-        const std::array<int, 3> m_supportedObjsDesktop = {
-            32, // same as web
-            // 1,
-            8,
-            16// ,
-            // 2
-        };
-        int m_objsCount;
-        GameObject* m_centerObj;
-        bool m_isWeb;
-        matjson::Value m_jsonSets;
-        std::stringstream m_objsString;
-        EventListener<Task<Result<std::filesystem::path>>> m_pickListener;
-        float m_drawScale = 1;
-        virtual bool setup(cocos2d::CCArray* selected_obj) override;
-        virtual void rgbToHsv(float& fR, float& fG, float fB, float& fH, float& fS, float& fV);
-        virtual void importJSON(cocos2d::CCObject* sender);
-        virtual void checkAlert(cocos2d::CCObject* sender);
-        virtual void parse();
-    public:
-        static ImportPopup* create(cocos2d::CCArray* selected_obj);
+class ImportPopup : public geode::Popup<cocos2d::CCArray*>, TextInputDelegate {
+protected:
+    static constexpr CCSize m_popupSize = CCSize(385.f, 245.f);
+    int m_zOrder = 0;
+    int m_objsCount = 0;
+    float m_drawScale = 1;
+    matjson::Value m_jsonSets;
+    const int m_circle_id = 497;
+    std::stringstream m_objsString;
+    GameObject* m_centerObj = nullptr;
+    TextInput* m_zLayerInput = nullptr;
+    CCLabelBMFont* m_fileLabel = nullptr;
+    CCLabelBMFont* m_countLabel = nullptr;
+    TextInput* m_drawScaleInput = nullptr;
+    const std::set<int> m_validTypes = {5, 3, 4, 32, 8, 0};
+    EventListener<Task<Result<std::filesystem::path>>> m_pickListener;
+protected:
+    void parse();
+    void importJSON(cocos2d::CCObject* sender);
+    void checkAlert(cocos2d::CCObject* sender);
+    void textChanged(CCTextInputNode *p0) override;
+    bool setup(cocos2d::CCArray* selected_obj) override;
+    void rgbToHsv(float fR, float fG, float fB, float& fH, float& fS, float& fV);
+public:
+    static ImportPopup* create(cocos2d::CCArray* selected_obj);
 };

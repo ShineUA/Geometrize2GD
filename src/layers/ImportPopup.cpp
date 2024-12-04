@@ -1,46 +1,5 @@
 #include "ImportPopup.h"
 
-std::set<short> getGroupIDs(GameObject* obj) {
-    std::set<short> res;
-
-    if (obj->m_groups && obj->m_groups->at(0))
-        for (auto i = 0; i < obj->m_groupCount; i++)
-            res.insert(obj->m_groups->at(i));
-    return res;
-}
-
-int nextFree(int offset)
-{
-    if(offset <= 0)
-    {
-        offset = 1;
-    }
-
-    std::set<short> usedGroups;
-    for (const auto& obj : CCArrayExt<GameObject*>(GameManager::sharedState()->m_levelEditorLayer->m_objects))
-    {
-        auto groups = getGroupIDs(obj);
-        for(const auto& group : groups)
-        {
-            if(group >= offset)
-            {
-                usedGroups.insert(group);
-            }
-        }
-    }
-    
-    int nextFreeGroup = offset;
-    for(short used : usedGroups)
-    {
-        if(nextFreeGroup != used)
-        {
-            return nextFreeGroup;
-        }
-        nextFreeGroup += 1;
-    }
-    return nextFreeGroup;
-}
-
 ImportPopup* ImportPopup::create(CCArray* selected_obj) {
     ImportPopup* ret = new ImportPopup();
     if (ret && ret->initAnchored(385.f, 245.f, selected_obj)) {
@@ -54,86 +13,87 @@ ImportPopup* ImportPopup::create(CCArray* selected_obj) {
 
 bool ImportPopup::setup(CCArray* selected_obj) {
     this->m_centerObj = CCArrayExt<GameObject*>(selected_obj)[0];
-    auto popupSize = CCSize(385.f, 245.f);
 
-    auto label_count = CCLabelBMFont::create("Objects: 0", "bigFont.fnt");
-    label_count->setPosition({popupSize.width / 2, popupSize.height / 2 - 65.f});
-    label_count->setVisible(false);
-    label_count->setID("count-label");
-    label_count->setScale(0.4);
+    this->m_countLabel = CCLabelBMFont::create("Objects: 0", "bigFont.fnt");
+    this->m_countLabel->setPosition({ImportPopup::m_popupSize.width / 2, ImportPopup::m_popupSize.height / 2 - 65.f});
+    this->m_countLabel->setVisible(false);
+    this->m_countLabel->setID("count-label");
+    this->m_countLabel->setScale(0.4);
 
-    auto draw_label = CCLabelBMFont::create("Scale:", "bigFont.fnt");
-    draw_label->setPosition({popupSize.width / 2 + 65.f, popupSize.height / 2 + 15.f});
-    draw_label->setVisible(false);
-    draw_label->setID("draw-scale-label");
-    draw_label->setScale(0.5);
+    auto drawLabel = CCLabelBMFont::create("Scale:", "bigFont.fnt");
+    drawLabel->setPosition({ImportPopup::m_popupSize.width / 2 + 65.f, ImportPopup::m_popupSize.height / 2 + 15.f});
+    drawLabel->setVisible(false);
+    drawLabel->setID("draw-scale-label");
+    drawLabel->setScale(0.5);
 
-    auto zlayer_label = CCLabelBMFont::create("Z-Layer\nOffset:", "bigFont.fnt");
-    zlayer_label->setPosition({popupSize.width / 2 - 65.f, popupSize.height / 2 + 15.f});
-    zlayer_label->setVisible(false);
-    zlayer_label->setID("zlayer-label");
-    zlayer_label->setScale(0.325);
+    auto zLayerLabel = CCLabelBMFont::create("Z-Layer\nOffset:", "bigFont.fnt");
+    zLayerLabel->setPosition({ImportPopup::m_popupSize.width / 2 - 65.f, ImportPopup::m_popupSize.height / 2 + 15.f});
+    zLayerLabel->setVisible(false);
+    zLayerLabel->setID("zlayer-label");
+    zLayerLabel->setScale(0.325);
 
-    auto selectedFileLabel = CCLabelBMFont::create("", "bigFont.fnt");
-    selectedFileLabel->setColor({0,255,0});
-    selectedFileLabel->setPosition(popupSize.width / 2, popupSize.height / 2 + 60.f);
-    selectedFileLabel->setScale(0.45);
-    selectedFileLabel->setID("file-label");
-    selectedFileLabel->setVisible(false);
-    
-    auto import_json_btn_spr = ButtonSprite::create("Select File");
-    auto import_json_btn = CCMenuItemSpriteExtra::create(
-        import_json_btn_spr, this, menu_selector(ImportPopup::importJSON)
+    this->m_fileLabel = CCLabelBMFont::create("", "bigFont.fnt");
+    this->m_fileLabel->setColor({0,255,0});
+    this->m_fileLabel->setPosition(ImportPopup::m_popupSize.width / 2, ImportPopup::m_popupSize.height / 2 + 60.f);
+    this->m_fileLabel->setScale(0.45);
+    this->m_fileLabel->setID("file-label");
+    this->m_fileLabel->setVisible(false);
+
+    auto importJsonSpr = ButtonSprite::create("Select File");
+    auto importJsonBtn = CCMenuItemSpriteExtra::create(
+        importJsonSpr, this, menu_selector(ImportPopup::importJSON)
     );
-    import_json_btn->setID("import-btn");
-    import_json_btn->setPosition(import_json_btn->getPosition() + popupSize / 2);
+    importJsonBtn->setID("import-btn");
+    importJsonBtn->setPosition(importJsonBtn->getPosition() + ImportPopup::m_popupSize / 2);
 
-    auto change_json_btn_spr = ButtonSprite::create("Change File");
-    auto change_json_btn = CCMenuItemSpriteExtra::create(
-        change_json_btn_spr, this, menu_selector(ImportPopup::importJSON)
+    auto changeJsonSpr = ButtonSprite::create("Change File");
+    auto changeJsonBtn = CCMenuItemSpriteExtra::create(
+        changeJsonSpr, this, menu_selector(ImportPopup::importJSON)
     );
-    change_json_btn->setVisible(false);
-    change_json_btn->setPosition({popupSize.width / 2, popupSize.height / 2 + 90.f});
-    change_json_btn->setID("change-btn");
+    changeJsonBtn->setVisible(false);
+    changeJsonBtn->setPosition({ImportPopup::m_popupSize.width / 2, ImportPopup::m_popupSize.height / 2 + 90.f});
+    changeJsonBtn->setID("change-btn");
 
-    auto convert_btn_spr =  ButtonSprite::create("Create");
-    auto convert_btn = CCMenuItemSpriteExtra::create(
-        convert_btn_spr, this, menu_selector(ImportPopup::checkAlert)
+    auto parseSpr =  ButtonSprite::create("Create");
+    auto parseBtn = CCMenuItemSpriteExtra::create(
+        parseSpr, this, menu_selector(ImportPopup::checkAlert)
     );
-    convert_btn->setPosition({popupSize.width / 2, popupSize.height / 2 - 95.f});
-    convert_btn->setVisible(false);
-    convert_btn->setID("convert-btn");
+    parseBtn->setPosition({ImportPopup::m_popupSize.width / 2, ImportPopup::m_popupSize.height / 2 - 95.f});
+    parseBtn->setVisible(false);
+    parseBtn->setID("convert-btn");
 
-    auto draw_scale_input = TextInput::create(50.f, "Float", "bigFont.fnt");
-    draw_scale_input->setCommonFilter(CommonFilter::Float);
-    draw_scale_input->setMaxCharCount(5);
-    draw_scale_input->setString("1");
-    draw_scale_input->setID("draw-input");
-    draw_scale_input->setPosition({popupSize.width / 2 + 65.f,popupSize.height / 2 - 15.f});
-    draw_scale_input->setVisible(false);
-    draw_scale_input->getInputNode()->setLabelPlaceholderScale(0.5);
-    draw_scale_input->getInputNode()->setMaxLabelScale(0.6);
+    this->m_drawScaleInput = TextInput::create(50.f, "Float", "bigFont.fnt");
+    this->m_drawScaleInput->setCommonFilter(CommonFilter::Float);
+    this->m_drawScaleInput->setMaxCharCount(5);
+    this->m_drawScaleInput->setString("1");
+    this->m_drawScaleInput->setID("draw-input");
+    this->m_drawScaleInput->setPosition({ImportPopup::m_popupSize.width / 2 + 65.f,ImportPopup::m_popupSize.height / 2 - 15.f});
+    this->m_drawScaleInput->setVisible(false);
+    this->m_drawScaleInput->getInputNode()->setLabelPlaceholderScale(0.5);
+    this->m_drawScaleInput->getInputNode()->setMaxLabelScale(0.6);
+    this->m_drawScaleInput->setDelegate(static_cast<TextInputDelegate*>(this));
 
-    auto z_layeroff_input = TextInput::create(50.f, "Int", "bigFont.fnt");
-    z_layeroff_input->setCommonFilter(CommonFilter::Int);
-    z_layeroff_input->setMaxCharCount(5);
-    z_layeroff_input->setString("0");
-    z_layeroff_input->setID("zlayer-input");
-    z_layeroff_input->setPosition({popupSize.width / 2 - 65.f, popupSize.height / 2 - 15.f});
-    z_layeroff_input->setVisible(false);
-    z_layeroff_input->getInputNode()->setLabelPlaceholderScale(0.6);
-    z_layeroff_input->getInputNode()->setMaxLabelScale(0.6);
-    
-    this->m_mainLayer->addChild(selectedFileLabel);
-    this->m_mainLayer->addChild(label_count);
-    this->m_mainLayer->addChild(draw_label);
-    this->m_mainLayer->addChild(zlayer_label);
-    
-    this->m_buttonMenu->addChild(import_json_btn);
-    this->m_buttonMenu->addChild(change_json_btn);
-    this->m_buttonMenu->addChild(convert_btn);
-    this->m_buttonMenu->addChild(draw_scale_input);
-    this->m_buttonMenu->addChild(z_layeroff_input);
+    this->m_zLayerInput = TextInput::create(50.f, "Int", "bigFont.fnt");
+    this->m_zLayerInput->setCommonFilter(CommonFilter::Int);
+    this->m_zLayerInput->setMaxCharCount(5);
+    this->m_zLayerInput->setString("0");
+    this->m_zLayerInput->setID("zlayer-input");
+    this->m_zLayerInput->setPosition({ImportPopup::m_popupSize.width / 2 - 65.f, ImportPopup::m_popupSize.height / 2 - 15.f});
+    this->m_zLayerInput->setVisible(false);
+    this->m_zLayerInput->getInputNode()->setLabelPlaceholderScale(0.6);
+    this->m_zLayerInput->getInputNode()->setMaxLabelScale(0.6);
+    this->m_zLayerInput->setDelegate(static_cast<TextInputDelegate*>(this));
+
+    this->m_mainLayer->addChild(this->m_fileLabel);
+    this->m_mainLayer->addChild(this->m_countLabel);
+    this->m_mainLayer->addChild(drawLabel);
+    this->m_mainLayer->addChild(zLayerLabel);
+
+    this->m_buttonMenu->addChild(importJsonBtn);
+    this->m_buttonMenu->addChild(changeJsonBtn);
+    this->m_buttonMenu->addChild(parseBtn);
+    this->m_buttonMenu->addChild(this->m_drawScaleInput);
+    this->m_buttonMenu->addChild(this->m_zLayerInput);
     return true;
 }
 
@@ -164,7 +124,11 @@ void ImportPopup::importJSON(CCObject* sender) {
             auto path = result->unwrap();
             if (path.string().ends_with(".json")) {
                 unsigned long fileSize = 0;
-                unsigned char* buffer = CCFileUtils::sharedFileUtils()->getFileData(path.string().c_str(), "rb", &fileSize);
+                unsigned char* buffer = CCFileUtils::sharedFileUtils()->getFileData(
+                    path.string().c_str(),
+                    "rb",
+                    &fileSize
+                );
                 std::string data = std::string(reinterpret_cast<char*>(buffer), fileSize);
                 auto optValue = matjson::parse(data);
                 if (optValue.isErr()) {
@@ -174,49 +138,53 @@ void ImportPopup::importJSON(CCObject* sender) {
                     )->show();
                 }
                 this->m_jsonSets = optValue.unwrap();
-                if (this->m_jsonSets.isArray())
-                    this->m_isWeb = true;
-                else if (this->m_jsonSets.isObject())
-                    this->m_isWeb = false;
-                else return FLAlertLayer::create("Error", "<cr>Failed</c> to read <cg>JSON</c>.", "OK")->show();
 
+                if (auto temp = this->m_jsonSets["shapes"].asArray()) {
+                    this->m_jsonSets = temp.unwrap();
+                } else if (auto temp = this->m_jsonSets.asArray()) {
+                    this->m_jsonSets = temp.unwrap();
+                } else {
+                    return Notification::create(
+                        "Failed to parse \"shapes\" key as array!",
+                        NotificationIcon::Error
+                    )->show();
+                }
+
+                for (auto obj : this->m_jsonSets) {
+                    auto objType = obj["type"].asInt();
+                    auto objScore = obj["score"].asDouble();
+
+                    if (!objType) {
+                        continue;
+                    }
+                    if (!objScore) {
+                        continue;
+                    }
+                    if (!this->m_validTypes.contains(
+                        objType.unwrap())) {
+                        continue;
+                    }
+                    if (objScore.unwrap() <= 0) {
+                        continue;
+                    }
+                    this->m_objsCount++;
+                }
+
+                auto countText = fmt::format("Objects: {}", this->m_objsCount);
+                auto fileText = fmt::format("File: {}", event->getValue()->unwrap().filename());
+                this->m_countLabel->setString(countText.c_str());
+                this->m_fileLabel->setString(fileText.c_str());
                 this->m_buttonMenu->getChildByID("import-btn")->setVisible(false);
                 this->m_buttonMenu->getChildByID("change-btn")->setVisible(true);
-                this->m_buttonMenu->getChildByID("draw-input")->setVisible(true);
-                this->m_buttonMenu->getChildByID("zlayer-input")->setVisible(true);
                 this->m_mainLayer->getChildByID("draw-scale-label")->setVisible(true);
                 this->m_mainLayer->getChildByID("zlayer-label")->setVisible(true);
-                this->m_mainLayer->getChildByID("count-label")->setVisible(true);
-                this->m_mainLayer->getChildByID("file-label")->setVisible(true);
                 this->m_buttonMenu->getChildByID("convert-btn")->setVisible(true);
+                this->m_fileLabel->setVisible(true);
+                this->m_countLabel->setVisible(true);
+                this->m_zLayerInput->setVisible(true);
+                this->m_drawScaleInput->setVisible(true);
                 this->m_objsCount = 0;
-                if (!this->m_isWeb) {
-                    if (auto val = this->m_jsonSets["shapes"].asArray(); val.isOk()) {
-                        for(int it = 0; it < val.unwrap().size(); it++) {
-                            if(auto objType = val.unwrap()[it]["type"].asInt(); objType.isOk()) {
-                                if (std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), objType.unwrap()) != this->m_supportedObjsDesktop.end()) {
-                                    if (auto objScore = val.unwrap()[it]["score"].asDouble(); objScore.isOk() && objScore.unwrap() > 0) {
-                                        this->m_objsCount++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    if (auto val = this->m_jsonSets.asArray(); val.isOk()) {
-                        for(int it = 0; it < val.unwrap().size(); it++) {
-                            if(auto objType = val.unwrap()[it]["type"].asInt(); objType.isOk()) {
-                                if (std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), objType.unwrap()) != this->m_supportedObjsWeb.end()) {
-                                    if (auto objScore = val.unwrap()[it]["score"].asDouble(); objScore.isOk() && objScore.unwrap() > 0) {
-                                        this->m_objsCount++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("count-label"))->setString(fmt::format("Objects: {}", this->m_objsCount).c_str());
-                static_cast<CCLabelBMFont*>(this->m_mainLayer->getChildByID("file-label"))->setString(fmt::format("File: {}", event->getValue()->unwrap().filename()).c_str());
+
                 Notification::create(
                     "File is imported",
                     NotificationIcon::Success
@@ -233,163 +201,75 @@ void ImportPopup::importJSON(CCObject* sender) {
 }
 
 void ImportPopup::parse() {
-    bool isTransparent = false;
-    float transparency;
-    int freeGroup = nextFree(0);
-    this->m_drawScale = std::stof(static_cast<TextInput*>(this->m_buttonMenu->getChildByID("draw-input"))->getString());
-    int z_order = std::stoi(static_cast<TextInput*>(this->m_buttonMenu->getChildByID("zlayer-input"))->getString());
-    if (!this->m_isWeb) {
-        if(auto objArr = this->m_jsonSets["shapes"].asArray(); objArr.isOk()) {
-            for (int it = 0; it < this->m_jsonSets["shapes"].asArray().unwrap().size(); it++) {
-                if(this->m_jsonSets["shapes"][it]["score"].asDouble().unwrap() > 0) {
-                    if (this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() < 255 && std::find(this->m_supportedObjsDesktop.begin(), this->m_supportedObjsDesktop.end(), this->m_jsonSets["shapes"].asArray().unwrap().at(it)["type"].asInt().unwrap()) != this->m_supportedObjsDesktop.end() && this->m_jsonSets["shapes"].asArray().unwrap().at(it) != this->m_jsonSets["shapes"].asArray().unwrap().at(0) && !isTransparent) {
-                        isTransparent = true;
-                        transparency = (float)this->m_jsonSets["shapes"].asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() / 255;
-                    }
-                    if (this->m_jsonSets["shapes"][it]["type"].asInt().unwrap() == this->m_supportedObjsDesktop[0]) {
-                        this->m_objsString << "1," << this->m_circle_id;
-                        this->m_objsString << ",2," << (float)this->m_jsonSets["shapes"][it]["data"][0].asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
-                        this->m_objsString << ",3," << (float)this->m_jsonSets["shapes"][it]["data"][1].asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
-                        this->m_objsString << ",32," << (float)this->m_jsonSets["shapes"][it]["data"][2].asDouble().unwrap() * this->m_drawScale / 7.125;
-                        this->m_objsString << ",41," << "1";
-                        this->m_objsString << ",42," << "1";
-                        this->m_objsString << ",21,1010,22,1010";
-                        float h, s, v;
-                        auto r = (float)this->m_jsonSets["shapes"][it]["color"][0].asDouble().unwrap() / 255.f;
-                        auto g = (float)this->m_jsonSets["shapes"][it]["color"][1].asDouble().unwrap() / 255.f;
-                        auto b = (float)this->m_jsonSets["shapes"][it]["color"][2].asDouble().unwrap() / 255.f;
-                        this->rgbToHsv(r, g, b, h, s, v);
-                        this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                        this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                        this->m_objsString << ",25," << z_order;
-                        this->m_objsString << ",57," << freeGroup;
-                        this->m_objsString << ",372,1";
-                        this->m_objsString << ";";
-                        z_order++;
-                    } else if (this->m_jsonSets["shapes"][it]["type"].asInt().unwrap() == this->m_supportedObjsDesktop[1]) {
-                        this->m_objsString << "1," << this->m_circle_id;
-                        this->m_objsString << ",2," << (float)this->m_jsonSets["shapes"][it]["data"][0].asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
-                        this->m_objsString << ",3," << (float)this->m_jsonSets["shapes"][it]["data"][1].asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
-                        this->m_objsString << ",128," << (float)this->m_jsonSets["shapes"][it]["data"][2].asDouble().unwrap() * this->m_drawScale / 7.125;
-                        this->m_objsString << ",129," << (float)this->m_jsonSets["shapes"][it]["data"][3].asDouble().unwrap() * this->m_drawScale / 7.125;
-                        this->m_objsString << ",41," << "1";
-                        this->m_objsString << ",42," << "1";
-                        this->m_objsString << ",21,1010,22,1010";
-                        float h, s, v;
-                        auto r = (float)this->m_jsonSets["shapes"][it]["color"][0].asDouble().unwrap() / 255.f;
-                        auto g = (float)this->m_jsonSets["shapes"][it]["color"][1].asDouble().unwrap() / 255.f;
-                        auto b = (float)this->m_jsonSets["shapes"][it]["color"][2].asDouble().unwrap() / 255.f;
-                        this->rgbToHsv(r, g, b, h, s, v);
-                        this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                        this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                        this->m_objsString << ",25," << z_order;
-                        this->m_objsString << ",57," << freeGroup;
-                        this->m_objsString << ",372,1";
-                        this->m_objsString << ";";
-                        z_order++;
-                    } else if (this->m_jsonSets["shapes"][it]["type"].asInt().unwrap() == this->m_supportedObjsDesktop[2]) {
-                        this->m_objsString << "1," << this->m_circle_id;
-                        this->m_objsString << ",2," << (float)this->m_jsonSets["shapes"][it]["data"][0].asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
-                        this->m_objsString << ",3," << (float)this->m_jsonSets["shapes"][it]["data"][1].asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
-                        this->m_objsString << ",128," << (float)this->m_jsonSets["shapes"][it]["data"][2].asDouble().unwrap() * this->m_drawScale / 7.125;
-                        this->m_objsString << ",129," << (float)this->m_jsonSets["shapes"][it]["data"][3].asDouble().unwrap() * this->m_drawScale / 7.125;
-                        this->m_objsString << ",6," << "-" << (float)this->m_jsonSets["shapes"][it]["data"][4].asDouble().unwrap();
-                        this->m_objsString << ",41," << "1";
-                        this->m_objsString << ",42," << "1";
-                        this->m_objsString << ",21,1010,22,1010";
-                        float h, s, v;
-                        auto r = (float)this->m_jsonSets["shapes"][it]["color"][0].asDouble().unwrap() / 255.f;
-                        auto g = (float)this->m_jsonSets["shapes"][it]["color"][1].asDouble().unwrap() / 255.f;
-                        auto b = (float)this->m_jsonSets["shapes"][it]["color"][2].asDouble().unwrap() / 255.f;
-                        this->rgbToHsv(r, g, b, h, s, v);
-                        this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                        this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                        this->m_objsString << ",25," << z_order;
-                        this->m_objsString << ",57," << freeGroup;
-                        this->m_objsString << ",372,1";
-                        this->m_objsString << ";";
-                        z_order++;
-                    }
-                }
-            }
+    for (auto obj : this->m_jsonSets) {
+        auto objScore = obj["score"].asDouble();
+        if (!objScore) {
+            continue;
         }
-    } else {
-        for (int it = 0; it < this->m_jsonSets.asArray().unwrap().size(); it++) {
-            if(this->m_jsonSets[it]["score"].asDouble().unwrap() > 0) {
-                if (this->m_jsonSets[it]["color"][3].asInt().unwrap() < 255 && std::find(this->m_supportedObjsWeb.begin(), this->m_supportedObjsWeb.end(), this->m_jsonSets[it]["type"].asInt().unwrap()) != this->m_supportedObjsWeb.end() && this->m_jsonSets.asArray().unwrap().at(it) != this->m_jsonSets.asArray().unwrap().at(0) && !isTransparent) {
-                    isTransparent = true;
-                    transparency = (float)this->m_jsonSets.asArray().unwrap().at(it)["color"].asArray().unwrap().at(3).asInt().unwrap() / 255;
-                }
-                if (this->m_jsonSets.asArray().unwrap().at(it)["type"].asInt().unwrap() == this->m_supportedObjsWeb[0]) {
-                    this->m_objsString << "1," << this->m_circle_id;
-                    this->m_objsString << ",2," << (float)this->m_jsonSets[it]["data"][0].asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
-                    this->m_objsString << ",3," << (float)this->m_jsonSets[it]["data"][1].asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
-                    this->m_objsString << ",32," << (float)this->m_jsonSets[it]["data"][2].asDouble().unwrap() * this->m_drawScale / 4 * 0.16;
-                    this->m_objsString << ",41," << "1";
-                    this->m_objsString << ",42," << "1";
-                    this->m_objsString << ",21,1010,22,1010";
-                    float h, s, v;
-                    auto r = (float)this->m_jsonSets[it]["color"][0].asDouble().unwrap() / 255.f;
-                    auto g = (float)this->m_jsonSets[it]["color"][1].asDouble().unwrap() / 255.f;
-                    auto b = (float)this->m_jsonSets[it]["color"][2].asDouble().unwrap() / 255.f;
-                    this->rgbToHsv(r, g, b, h, s, v);
-                    this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                    this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                    this->m_objsString << ",25," << z_order;
-                    this->m_objsString << ",57," << freeGroup;
-                    this->m_objsString << ",372,1";
-                    this->m_objsString << ";";
-                    z_order++;
-                } else if (this->m_jsonSets[it]["type"].asInt().unwrap() == this->m_supportedObjsWeb[1]) {
-                    this->m_objsString << "1," << this->m_circle_id;
-                    this->m_objsString << ",2," << (float)this->m_jsonSets[it]["data"][0].asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
-                    this->m_objsString << ",3," << (float)this->m_jsonSets[it]["data"][1].asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
-                    this->m_objsString << ",128," << (float)this->m_jsonSets[it]["data"][2].asDouble().unwrap() * this->m_drawScale / 4 * 0.16;
-                    this->m_objsString << ",129," << (float)this->m_jsonSets[it]["data"][3].asDouble().unwrap() * this->m_drawScale / 4 * 0.16;
-                    this->m_objsString << ",41," << "1";
-                    this->m_objsString << ",42," << "1";
-                    this->m_objsString << ",21,1010,22,1010";
-                    float h, s, v;
-                    auto r = (float)this->m_jsonSets[it]["color"][0].asDouble().unwrap() / 255.f;
-                    auto g = (float)this->m_jsonSets[it]["color"][1].asDouble().unwrap() / 255.f;
-                    auto b = (float)this->m_jsonSets[it]["color"][2].asDouble().unwrap() / 255.f;
-                    this->rgbToHsv(r, g, b, h, s, v);
-                    this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                    this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                    this->m_objsString << ",25," << z_order;
-                    this->m_objsString << ",57," << freeGroup;
-                    this->m_objsString << ",372,1";
-                    this->m_objsString << ";";
-                    z_order++;
-                } else if (this->m_jsonSets[it]["type"].asInt().unwrap() == this->m_supportedObjsWeb[2]) {
-                    this->m_objsString << "1," << this->m_circle_id;
-                    this->m_objsString << ",2," << (float)this->m_jsonSets[it]["data"][0].asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
-                    this->m_objsString << ",3," << (float)this->m_jsonSets[it]["data"][1].asDouble().unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
-                    this->m_objsString << ",128," << (float)this->m_jsonSets[it]["data"][2].asDouble().unwrap() * this->m_drawScale / 4 * 0.16;
-                    this->m_objsString << ",129," << (float)this->m_jsonSets[it]["data"][3].asDouble().unwrap() * this->m_drawScale / 4 * 0.16;
-                    this->m_objsString << ",6," << "-" << (float)this->m_jsonSets[it]["data"][4].asDouble().unwrap();
-                    this->m_objsString << ",41," << "1";
-                    this->m_objsString << ",42," << "1";
-                    this->m_objsString << ",21,1010,22,1010";
-                    float h, s, v;
-                    auto r = (float)this->m_jsonSets[it]["color"][0].asDouble().unwrap() / 255.f;
-                    auto g = (float)this->m_jsonSets[it]["color"][1].asDouble().unwrap() / 255.f;
-                    auto b = (float)this->m_jsonSets[it]["color"][2].asDouble().unwrap() / 255.f;
-                    this->rgbToHsv(r, g, b, h, s, v);
-                    this->m_objsString << ",43," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                    this->m_objsString << ",44," << h << "a" << s << "a" << v << "a" << 1 << "a" << 1;
-                    this->m_objsString << ",25," << z_order;
-                    this->m_objsString << ",57," << freeGroup;
-                    this->m_objsString << ",372,1";
-                    this->m_objsString << ";";
-                    z_order++;
-                }
-            }
+        if(objScore.unwrap() <= 0) {
+            continue;
         }
+
+        float posX = this->m_centerObj->getPositionX();
+        auto posXResult = obj["data"][0].asDouble();
+        float posY = this->m_centerObj->getPositionY();
+        auto posYResult = obj["data"][1].asDouble();
+        float scaleX = 1.f;
+        auto scaleXResult = obj["data"][2].asDouble();
+        float scaleY = 1.f;
+        auto scaleYResult = obj["data"][3].asDouble();
+        float rotation = 0.f;
+        auto rotationResult = obj["data"][4].asDouble();
+        auto redResult = obj["color"][0].asDouble();
+        auto blueResult = obj["color"][1].asDouble();
+        auto greenResult = obj["color"][2].asDouble();
+        float h = 0.f;
+        float s = 0.f;
+        float v = 0.f;
+
+        if (posXResult) {
+            posX = posXResult.unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
+        }
+        if (posYResult) {
+            posY = posYResult.unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
+        }
+        if (scaleXResult) {
+            scaleX = scaleXResult.unwrap() * this->m_drawScale / 4 * 0.16;
+        }
+        if (scaleYResult) {
+            scaleY = scaleYResult.unwrap() * this->m_drawScale / 4 * 0.16;
+        } else {
+            scaleY = scaleX;
+        }
+        if (rotationResult) {
+            rotation = -rotationResult.unwrap();
+        }
+        if (redResult && blueResult && greenResult) {
+            this->rgbToHsv(
+                redResult.unwrap() / 255.f,
+                blueResult.unwrap() / 255.f,
+                greenResult.unwrap() / 255.f,
+                h,s,v
+            );
+        }
+        auto parsedObj = fmt::format(
+            "1,{},2,{},3,{},128,{},129,{},6,{},41,1,42,1,21,1010,22,1010,43,{}a{}a{}a1a1,44,{}a{}a{}a1a1,25,{},372,1;",
+            this->m_circle_id,
+            posX,
+            posY,
+            scaleX,
+            scaleY,
+            rotation,
+            h,s,v,
+            h,s,v,
+            this->m_zOrder
+        );
+        this->m_objsString << parsedObj;
+        this->m_zOrder++;
     }
     if (this->m_objsString.str().empty()) {
         Notification::create(
-            "No object added.",
+            "No objects added.",
             NotificationIcon::Error
         )->show();
         return this->onClose(nullptr);
@@ -399,9 +279,6 @@ void ImportPopup::parse() {
     curr_editor_ui->onDeleteSelected(nullptr);
     auto obj_arr = curr_editor_layer->createObjectsFromString(this->m_objsString.str().c_str(), true, true);
     curr_editor_ui->flipObjectsY(obj_arr);
-    if (isTransparent) {
-        obj_arr->addObject(curr_editor_layer->createObjectsFromString(fmt::format("1,1007,2,-15,3,15,51,{},35,{}", freeGroup, transparency).c_str(), true, true)->objectAtIndex(0));
-    }
     curr_editor_layer->m_undoObjects->addObject(UndoObject::createWithArray(obj_arr, UndoCommand::Paste));
     curr_editor_ui->selectObjects(obj_arr, true);
     curr_editor_ui->updateButtons();
@@ -412,36 +289,36 @@ void ImportPopup::parse() {
     )->show();
 }
 
-void ImportPopup::rgbToHsv(float& fR, float& fG, float fB, float& fH, float& fS, float& fV) {
+void ImportPopup::rgbToHsv(float fR, float fG, float fB, float& fH, float& fS, float& fV) {
     float fCMax = std::max(std::max(fR, fG), fB);
-  float fCMin = std::min(std::min(fR, fG), fB);
-  float fDelta = fCMax - fCMin;
-  
-  if(fDelta > 0) {
-    if(fCMax == fR) {
-      fH = 60 * (fmod(((fG - fB) / fDelta), 6));
-    } else if(fCMax == fG) {
-      fH = 60 * (((fB - fR) / fDelta) + 2);
-    } else if(fCMax == fB) {
-      fH = 60 * (((fR - fG) / fDelta) + 4);
-    }
-    
-    if(fCMax > 0) {
-      fS = fDelta / fCMax;
+    float fCMin = std::min(std::min(fR, fG), fB);
+    float fDelta = fCMax - fCMin;
+
+    if(fDelta > 0) {
+        if(fCMax == fR) {
+            fH = 60 * (fmod(((fG - fB) / fDelta), 6));
+        } else if(fCMax == fG) {
+            fH = 60 * (((fB - fR) / fDelta) + 2);
+        } else if(fCMax == fB) {
+            fH = 60 * (((fR - fG) / fDelta) + 4);
+        }
+
+        if (fCMax > 0) {
+            fS = fDelta / fCMax;
+        } else {
+            fS = 0;
+        }
+
+        fV = fCMax;
     } else {
-      fS = 0;
+        fH = 0;
+        fS = 0;
+        fV = fCMax;
     }
-    
-    fV = fCMax;
-  } else {
-    fH = 0;
-    fS = 0;
-    fV = fCMax;
-  }
-  
-  if(fH < 0) {
-    fH = 360 + fH;
-  }
+
+    if(fH < 0) {
+        fH = 360 + fH;
+    }
 }
 
 void ImportPopup::checkAlert(CCObject* sender) {
@@ -449,9 +326,9 @@ void ImportPopup::checkAlert(CCObject* sender) {
         geode::createQuickPopup(
             "Alert",
             "This will place more than <cy>5000 objects</c>\nAre you sure?",
-            "Yes", "No",
+            "No", "Yes",
             [this](auto, bool btn2) {
-                if (!btn2) {
+                if (btn2) {
                     this->parse();
                 }
             }
@@ -460,4 +337,28 @@ void ImportPopup::checkAlert(CCObject* sender) {
         this->parse();
     }
 }
+
+void ImportPopup::textChanged(CCTextInputNode *p0) {
+    if (p0 == this->m_drawScaleInput->getInputNode()) {
+        auto num = utils::numFromString<float>(p0->getString());
+        if (num.isErr()) {
+            return p0->setLabelNormalColor(ccColor3B(255,0,0));
+        }
+        auto numUn = num.unwrap();
+        if (numUn <= 0) {
+            return p0->setLabelNormalColor(ccColor3B(255,0,0));
+        }
+        p0->setLabelNormalColor(ccColor3B(255,255,255));
+        this->m_drawScale = numUn;
+    } else if (p0 == this->m_zLayerInput->getInputNode()) {
+        auto num = utils::numFromString<int>(p0->getString());
+        if (num.isErr()) {
+            return p0->setLabelNormalColor(ccColor3B(255,0,0));
+        }
+        auto numUn = num.unwrap();
+        p0->setLabelNormalColor(ccColor3B(255,255,255));
+        this->m_zOrder = numUn;
+    }
+}
+
 

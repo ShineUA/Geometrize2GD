@@ -2,6 +2,8 @@
 
 - Ported to v2.207
 - Changed circle object
+- Refactored the code
+- Some QOI changes
 
 # v1.2.2
 
