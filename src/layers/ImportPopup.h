@@ -19,21 +19,21 @@ protected:
     float m_drawScale = 1;
     matjson::Value m_jsonSets;
     const int m_circle_id = 497;
-    std::stringstream m_objsString;
+    std::ostringstream m_objsString;
     GameObject* m_centerObj = nullptr;
     TextInput* m_zLayerInput = nullptr;
     CCLabelBMFont* m_fileLabel = nullptr;
     CCLabelBMFont* m_countLabel = nullptr;
     TextInput* m_drawScaleInput = nullptr;
-    const std::set<int> m_validTypes = {5, 3, 4, 32, 8, 0};
+    const std::set<int> m_validTypes = {5, 3, 4, 32, 8, 16};
     EventListener<Task<Result<std::filesystem::path>>> m_pickListener;
 protected:
-    void parse();
+    void parseAndPlace();
     void importJSON(cocos2d::CCObject* sender);
     void checkAlert(cocos2d::CCObject* sender);
     void textChanged(CCTextInputNode *p0) override;
-    bool setup(cocos2d::CCArray* selected_obj) override;
+    bool setup(cocos2d::CCArray* selectedObj) override;
     void rgbToHsv(float fR, float fG, float fB, float& fH, float& fS, float& fV);
 public:
-    static ImportPopup* create(cocos2d::CCArray* selected_obj);
+    static ImportPopup* create(cocos2d::CCArray* selectedObj);
 };

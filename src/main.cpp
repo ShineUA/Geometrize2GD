@@ -4,7 +4,10 @@
 
 using namespace geode::prelude;
 
+// This hook adds a custom button
 class $modify(MyEditorUI, EditorUI) {
+
+	// Checks does there are selected objects. If so, creates ImportPopup
 	void onImgToGD(CCObject*) {
 		if(this->getSelectedObjects()->count() == 1) {
 			auto importPopup = ImportPopup::create(this->getSelectedObjects());
@@ -15,11 +18,16 @@ class $modify(MyEditorUI, EditorUI) {
 	}
 
 	void createMoveMenu() {
+		// Calling the original function
 		EditorUI::createMoveMenu();
+
+		// Creating custom button and adding it to button array
 		auto* btn = this->getSpriteButton("geometrize2gd.png"_spr, menu_selector(MyEditorUI::onImgToGD), nullptr, 0.9f);
 		m_editButtonBar->m_buttonArray->addObject(btn);
+
+		// Checking settings and updating buttons
 		auto rows = GameManager::sharedState()->getIntGameVariable("0049");
-		auto cols = GameManager::sharedState()->getIntGameVariable("0050");
-		m_editButtonBar->reloadItems(rows, cols);
+		auto columns = GameManager::sharedState()->getIntGameVariable("0050");
+		m_editButtonBar->reloadItems(rows, columns);
 	}
 };

@@ -1,8 +1,8 @@
 #include "ImportPopup.h"
 
-ImportPopup* ImportPopup::create(CCArray* selected_obj) {
+ImportPopup* ImportPopup::create(CCArray* selectedObj) {
     ImportPopup* ret = new ImportPopup();
-    if (ret && ret->initAnchored(385.f, 245.f, selected_obj)) {
+    if (ret && ret->initAnchored(385.f, 245.f, selectedObj)) {
         ret->autorelease();
     } else {
         delete ret;
@@ -11,8 +11,9 @@ ImportPopup* ImportPopup::create(CCArray* selected_obj) {
     return ret;
 }
 
-bool ImportPopup::setup(CCArray* selected_obj) {
-    this->m_centerObj = CCArrayExt<GameObject*>(selected_obj)[0];
+// Setups the layer
+bool ImportPopup::setup(CCArray* selectedObj) {
+    this->m_centerObj = CCArrayExt<GameObject*>(selectedObj)[0];
 
     this->m_countLabel = CCLabelBMFont::create("Objects: 0", "bigFont.fnt");
     this->m_countLabel->setPosition({ImportPopup::m_popupSize.width / 2, ImportPopup::m_popupSize.height / 2 - 65.f});
@@ -98,6 +99,7 @@ bool ImportPopup::setup(CCArray* selected_obj) {
 }
 
 void ImportPopup::importJSON(CCObject* sender) {
+    // Setting file pick options
     file::FilePickOptions::Filter filter = {
         .description = "Geometrize JSON Output",
         .files = { "*.json"}
@@ -107,22 +109,29 @@ void ImportPopup::importJSON(CCObject* sender) {
         {filter}
     };
 
+    // Binding a function to listener
     m_pickListener.bind([this](Task<Result<std::filesystem::path>>::Event* event) {
+        // Notifies user if the file pick menu is just closed
         if (event->isCancelled()) {
             return Notification::create(
                 "Failed to open file (Task Cancelled)",
                 NotificationIcon::Error
             )->show();
         }
+        // Gets Result and checks if null
         if (auto result = event->getValue()) {
+            // Checks does Result is empty or not
             if(result->isErr()) {
                 return Notification::create(
                     fmt::format("Failed to open file. Error: {}", result->err()),
                     NotificationIcon::Error
                 )->show();
             }
+            // Unwraps result into std::filesystem::path and checks does it end with ".json"
             auto path = result->unwrap();
             if (path.string().ends_with(".json")) {
+
+                // Reads the json file and converts output to std::string
                 unsigned long fileSize = 0;
                 unsigned char* buffer = CCFileUtils::sharedFileUtils()->getFileData(
                     path.string().c_str(),
@@ -130,14 +139,16 @@ void ImportPopup::importJSON(CCObject* sender) {
                     &fileSize
                 );
                 std::string data = std::string(reinterpret_cast<char*>(buffer), fileSize);
-                auto optValue = matjson::parse(data);
-                if (optValue.isErr()) {
+
+                // Parses json
+                auto jsonResult = matjson::parse(data);
+                if (jsonResult.isErr()) {
                     return Notification::create(
                         "Failed to parse JSON!",
                         NotificationIcon::Error
                     )->show();
                 }
-                this->m_jsonSets = optValue.unwrap();
+                this->m_jsonSets = jsonResult.unwrap();
 
                 if (auto temp = this->m_jsonSets["shapes"].asArray()) {
                     this->m_jsonSets = temp.unwrap();
@@ -150,6 +161,7 @@ void ImportPopup::importJSON(CCObject* sender) {
                     )->show();
                 }
 
+                // Counts the objects
                 for (auto obj : this->m_jsonSets) {
                     auto objType = obj["type"].asInt();
                     auto objScore = obj["score"].asDouble();
@@ -200,50 +212,44 @@ void ImportPopup::importJSON(CCObject* sender) {
     m_pickListener.setFilter(file::pick(file::PickMode::OpenFile, options));
 }
 
-void ImportPopup::parse() {
+// Parses the objects from Geometrize to GD format and places the objects inside GD Editor
+void ImportPopup::parseAndPlace() {
     for (auto obj : this->m_jsonSets) {
+        // Avoiding objects with zero score
         auto objScore = obj["score"].asDouble();
-        if (!objScore) {
-            continue;
-        }
-        if(objScore.unwrap() <= 0) {
+        if (!objScore || objScore.unwrap() <= 0) {
             continue;
         }
 
+        // Setting and initializing default properties if there is missing some
         float posX = this->m_centerObj->getPositionX();
-        auto posXResult = obj["data"][0].asDouble();
         float posY = this->m_centerObj->getPositionY();
-        auto posYResult = obj["data"][1].asDouble();
-        float scaleX = 1.f;
-        auto scaleXResult = obj["data"][2].asDouble();
-        float scaleY = 1.f;
-        auto scaleYResult = obj["data"][3].asDouble();
-        float rotation = 0.f;
-        auto rotationResult = obj["data"][4].asDouble();
+        float scaleX = 1.f, scaleY = 1.f, rotation = 0.f;
         auto redResult = obj["color"][0].asDouble();
         auto blueResult = obj["color"][1].asDouble();
         auto greenResult = obj["color"][2].asDouble();
-        float h = 0.f;
-        float s = 0.f;
-        float v = 0.f;
 
-        if (posXResult) {
+        // Parsing object's general properties
+        if (auto posXResult = obj["data"][0].asDouble()) {
             posX = posXResult.unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
         }
-        if (posYResult) {
+        if (auto posYResult = obj["data"][1].asDouble()) {
             posY = posYResult.unwrap() * this->m_drawScale + this->m_centerObj->getPositionY();
         }
-        if (scaleXResult) {
+        if (auto scaleXResult = obj["data"][2].asDouble()) {
             scaleX = scaleXResult.unwrap() * this->m_drawScale / 4 * 0.16;
         }
-        if (scaleYResult) {
+        if (auto scaleYResult = obj["data"][3].asDouble()) {
             scaleY = scaleYResult.unwrap() * this->m_drawScale / 4 * 0.16;
         } else {
             scaleY = scaleX;
         }
-        if (rotationResult) {
+        if (auto rotationResult = obj["data"][4].asDouble()) {
             rotation = -rotationResult.unwrap();
         }
+
+        // Parsing colors
+        float h = 0.f, s = 0.f, v = 0.f;
         if (redResult && blueResult && greenResult) {
             this->rgbToHsv(
                 redResult.unwrap() / 255.f,
@@ -252,7 +258,9 @@ void ImportPopup::parse() {
                 h,s,v
             );
         }
-        auto parsedObj = fmt::format(
+
+        // Parsing objects to gd format and increasing Z Order
+        this->m_objsString << fmt::format(
             "1,{},2,{},3,{},128,{},129,{},6,{},41,1,42,1,21,1010,22,1010,43,{}a{}a{}a1a1,44,{}a{}a{}a1a1,25,{},372,1;",
             this->m_circle_id,
             posX,
@@ -264,9 +272,10 @@ void ImportPopup::parse() {
             h,s,v,
             this->m_zOrder
         );
-        this->m_objsString << parsedObj;
         this->m_zOrder++;
     }
+
+    // Checking if there are no parsed objects
     if (this->m_objsString.str().empty()) {
         Notification::create(
             "No objects added.",
@@ -274,22 +283,33 @@ void ImportPopup::parse() {
         )->show();
         return this->onClose(nullptr);
     }
-    auto curr_editor_layer = LevelEditorLayer::get();
-    auto curr_editor_ui = curr_editor_layer->m_editorUI;
-    curr_editor_ui->onDeleteSelected(nullptr);
-    auto obj_arr = curr_editor_layer->createObjectsFromString(this->m_objsString.str().c_str(), true, true);
-    curr_editor_ui->flipObjectsY(obj_arr);
-    curr_editor_layer->m_undoObjects->addObject(UndoObject::createWithArray(obj_arr, UndoCommand::Paste));
-    curr_editor_ui->selectObjects(obj_arr, true);
-    curr_editor_ui->updateButtons();
-    this->keyBackClicked();
+
+    // Getting both LevelEditorLayer and EditorUI
+    auto activeEditorLayer = LevelEditorLayer::get();
+    auto activeEditorUI = activeEditorLayer->m_editorUI;
+
+    // Deleting selected objects
+    activeEditorUI->onDeleteSelected(nullptr);
+
+    // Create objects from string and flip Y-axis
+    auto objectsArray = activeEditorLayer->createObjectsFromString(this->m_objsString.str().c_str(), true, true);
+    activeEditorUI->flipObjectsY(objectsArray);
+
+    // Add to undo stack and select objects
+    activeEditorLayer->m_undoObjects->addObject(UndoObject::createWithArray(objectsArray, UndoCommand::Paste));
+    activeEditorUI->selectObjects(objectsArray, true);
+
+    // Update UI and notify user
+    activeEditorUI->updateButtons();
     Notification::create(
         "Successfully converted to gd objects!",
         NotificationIcon::Success
     )->show();
+    this->keyBackClicked();
 }
 
 void ImportPopup::rgbToHsv(float fR, float fG, float fB, float& fH, float& fS, float& fV) {
+    // This function is took from https://gist.github.com/fairlight1337/4935ae72bcbcc1ba5c72#file-hsvrgb-cpp-L53
     float fCMax = std::max(std::max(fR, fG), fB);
     float fCMin = std::min(std::min(fR, fG), fB);
     float fDelta = fCMax - fCMin;
@@ -321,6 +341,7 @@ void ImportPopup::rgbToHsv(float fR, float fG, float fB, float& fH, float& fS, f
     }
 }
 
+// Checks does object count is bigger than 5k. If so, it shows a warning
 void ImportPopup::checkAlert(CCObject* sender) {
     if (this->m_objsCount > 5000) {
         geode::createQuickPopup(
@@ -329,15 +350,16 @@ void ImportPopup::checkAlert(CCObject* sender) {
             "No", "Yes",
             [this](auto, bool btn2) {
                 if (btn2) {
-                    this->parse();
+                    this->parseAndPlace();
                 }
             }
         );
     } else {
-        this->parse();
+        this->parseAndPlace();
     }
 }
 
+// Checks the value inside inputs to avoid unwanted crashes
 void ImportPopup::textChanged(CCTextInputNode *p0) {
     if (p0 == this->m_drawScaleInput->getInputNode()) {
         auto num = utils::numFromString<float>(p0->getString());
