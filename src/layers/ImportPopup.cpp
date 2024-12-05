@@ -228,8 +228,15 @@ void ImportPopup::parseAndPlace() {
         auto redResult = obj["color"][0].asDouble();
         auto blueResult = obj["color"][1].asDouble();
         auto greenResult = obj["color"][2].asDouble();
+        int objId = m_CircleId;
 
         // Parsing object's general properties
+        // if (auto objType = obj["type"].asInt()) {
+        //     if (this->m_squareTypes.contains(
+        //         objType.unwrap())) {
+        //         objId = m_SquareId;
+        //     }
+        // }
         if (auto posXResult = obj["data"][0].asDouble()) {
             posX = posXResult.unwrap() * this->m_drawScale + this->m_centerObj->getPositionX();
         }
@@ -262,17 +269,10 @@ void ImportPopup::parseAndPlace() {
         // Parsing objects to gd format and increasing Z Order
         this->m_objsString << fmt::format(
             "1,{},2,{},3,{},128,{},129,{},6,{},41,1,42,1,21,1010,22,1010,43,{}a{}a{}a1a1,44,{}a{}a{}a1a1,25,{},372,1;",
-            this->m_circle_id,
-            posX,
-            posY,
-            scaleX,
-            scaleY,
-            rotation,
-            h,s,v,
-            h,s,v,
-            this->m_zOrder
+            objId, posX, posY, scaleX, scaleY, rotation,
+            h,s,v, h,s,v, this->m_zOrder
         );
-        this->m_zOrder++;
+        this->m_zOrder;
     }
 
     // Checking if there are no parsed objects

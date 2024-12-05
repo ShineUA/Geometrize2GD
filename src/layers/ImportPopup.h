@@ -18,14 +18,16 @@ protected:
     int m_objsCount = 0;
     float m_drawScale = 1;
     matjson::Value m_jsonSets;
-    const int m_circle_id = 497;
     std::ostringstream m_objsString;
     GameObject* m_centerObj = nullptr;
     TextInput* m_zLayerInput = nullptr;
     CCLabelBMFont* m_fileLabel = nullptr;
     CCLabelBMFont* m_countLabel = nullptr;
     TextInput* m_drawScaleInput = nullptr;
-    const std::set<int> m_validTypes = {5, 3, 4, 32, 8, 16};
+    static constexpr int m_CircleId = 497;
+    static constexpr int m_SquareId = 495;
+    const std::set<int> m_squareTypes = {0, 1, 2};
+    const std::set<int> m_validTypes = {5, 3, 4, 32, 8, 16}; // 0, 1, 2
     EventListener<Task<Result<std::filesystem::path>>> m_pickListener;
 protected:
     void parseAndPlace();
