@@ -13,7 +13,6 @@ using namespace geode::prelude;
 
 class ImportPopup : public geode::Popup<cocos2d::CCArray*>, TextInputDelegate {
 protected:
-    static constexpr CCSize m_popupSize = CCSize(385.f, 245.f);
     int m_zOrder = 0;
     int m_objsCount = 0;
     float m_drawScale = 1;
@@ -28,6 +27,7 @@ protected:
     static constexpr int m_SquareId = 495;
     const std::set<int> m_squareTypes = {0, 1, 2};
     const std::set<int> m_validTypes = {5, 3, 4, 32, 8, 16}; // 0, 1, 2
+    static constexpr CCSize m_popupSize = CCSize(385.f, 245.f);
     EventListener<Task<Result<std::filesystem::path>>> m_pickListener;
 protected:
     void parseAndPlace();
