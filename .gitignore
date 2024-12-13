@@ -43,6 +43,8 @@
 **/build
 # Ignore platform specific build folders
 build-*/
+cmake-build-relwithdebinfo-ninja--clang-cl/
+**/cmake-build-relwithdebinfo-ninja--clang-cl
 
 # Workspace files are user-specific
 *.sublime-workspace
